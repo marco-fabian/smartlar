@@ -3,6 +3,9 @@
 -- então rode de novo antes de uma demo pra Automação 2 e o dashboard terem dados.
 -- ATENÇÃO: apaga todos os dados das tabelas antes de popular.
 
+-- Não dispara os webhooks do n8n durante o seed
+set app.seed = 'on';
+
 truncate public.historico_status, public.itens_pedido, public.pedidos,
          public.produtos, public.tecnicos, public.clientes
   restart identity cascade;
@@ -173,3 +176,5 @@ select pg_temp.seed_pedido('5511987650003',
   '[{"produto":"Câmera IP Wi-Fi","qtd":1}]',
   'cancelado', now() - interval '20 days',
   p_obs => 'Cliente desistiu, achou caro');
+
+reset app.seed;
