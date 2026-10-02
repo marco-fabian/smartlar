@@ -44,6 +44,28 @@ Cálculo de valores, fluxo de status e validações ficam em constraints e trigg
 ### Dados de exemplo
 O seed cria os pedidos passando pelo fluxo real de status (os mesmos triggers que o sistema usa). As datas são relativas ao dia em que roda ("amanhã", "daqui 4 dias"), então dá pra rodar de novo antes de uma demo.
 
+## Frontend
+
+### Código próprio em vez de Lovable/Bolt
+React + Vite + TypeScript + Tailwind + shadcn/ui, o mesmo stack que o Lovable gera, mas escrito direto no repositório. Ganho: controle total do código, histórico de commits limpo e tipos gerados a partir do banco (`database.types.ts`), então se uma coluna mudar o build quebra em vez de dar erro em produção.
+
+### Login simples (bônus)
+Um usuário (o Rafael), criado direto no painel do Supabase. Sem tela de cadastro nem recuperação de senha. Sem login o RLS não teria como proteger os dados, já que a chave pública fica exposta no navegador.
+
+### Regras de tela vêm do banco
+- Os botões de status ("Aprovar", "Agendar instalação"...) são montados a partir de `status_transicoes`: o front não tem uma cópia da regra.
+- Aprovar pede a forma de pagamento; agendar pede técnico e data/hora (não deixa data no passado). Cancelar pede confirmação.
+- Mensagens de erro dos triggers aparecem direto para o usuário (já estão em português).
+
+### Cálculo no front só para exibição
+O total exibido enquanto o pedido é montado é calculado em centavos (inteiros) para não ter erro de arredondamento. O valor que vale é o do banco: o pedido é salvo pela função `criar_pedido()` e o total é recalculado pelos triggers.
+
+### Detalhes de usabilidade
+- Novo pedido: busca de cliente por nome ou telefone, cadastro de cliente sem sair da tela, e adicionar o mesmo produto de novo soma na quantidade.
+- Dashboard: orçamentos parados há 7 dias ou mais ficam destacados (dor do Rafael: "esquece orçamentos que mandou").
+- Agenda: pensada para o técnico no celular. Agrupada por dia, com link para o endereço no Google Maps, link para o WhatsApp do cliente e lista do que instalar.
+- Telefone aceita qualquer formato na digitação e é salvo só com dígitos.
+
 ## Interpretações do enunciado
 - **Cancelamento**: a tabela do enunciado lista `... → concluido → cancelado`, mas as regras dizem que só `orcamento` e `aprovado` podem ser cancelados. Segui as regras. Se um pedido `agendado` puder ser cancelado, é uma linha a mais em `status_transicoes`.
 - **"Total de pedidos do mês"**: pedidos criados no mês atual, em qualquer status.
