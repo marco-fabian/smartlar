@@ -1,6 +1,10 @@
 node_modules
 dist
+*.log
 .env
-.env.local
-.env.*.local
+*.local
 .claude/
+.DS_Store
+.vscode/*
+!.vscode/extensions.json
+.idea
