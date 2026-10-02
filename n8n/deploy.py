@@ -53,9 +53,9 @@ def ids_das_tags(nomes):
 def publicar(chave):
     ids = json.loads((RAIZ / 'ids.json').read_text(encoding='utf-8'))
     texto = (build.SAIDA / f'{build.ARQUIVOS[chave]}.json').read_text(encoding='utf-8')
-    # O telefone do Rafael não vai para o repositório (público): entra só na publicação
-    if os.environ.get('SMARTLAR_TELEFONE_RAFAEL'):
-        texto = texto.replace(build.TELEFONE_PADRAO, os.environ['SMARTLAR_TELEFONE_RAFAEL'])
+    # O destino (número ou grupo do Rafael) não vai para o repositório público: entra só na publicação
+    if os.environ.get('SMARTLAR_WHATSAPP_DESTINO'):
+        texto = texto.replace(build.DESTINO_PADRAO, os.environ['SMARTLAR_WHATSAPP_DESTINO'])
     wf = json.loads(texto)
     corpo = {k: wf[k] for k in ('name', 'nodes', 'connections', 'settings')}
 

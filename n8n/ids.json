@@ -1,11 +1,11 @@
 {
   "credenciais": {
     "supabase": {
-      "id": "or4eVz51hshmnh3Q",
+      "id": "1wRzT0SfONkLnl2w",
       "name": "SmartLar · Supabase (service role)"
     },
     "evolution": {
-      "id": "tlNRxTw4qmkQnkIX",
+      "id": "6EGUfq8ogr4uL2Ug",
       "name": "SmartLar · Evolution API"
     },
     "webhook": {

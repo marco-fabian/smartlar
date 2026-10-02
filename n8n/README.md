@@ -35,7 +35,7 @@ Variáveis de ambiente do deploy:
 | Variável | Uso |
 |---|---|
 | `N8N_API_URL`, `N8N_API_KEY` | API da instância do n8n |
-| `SMARTLAR_TELEFONE_RAFAEL` | Número que recebe as notificações (fica fora do repositório público) |
+| `SMARTLAR_WHATSAPP_DESTINO` | Número ou grupo (`...@g.us`) que recebe as notificações (fica fora do repositório público) |
 
 ## Convenções
 

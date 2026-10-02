@@ -76,7 +76,7 @@ Cloudflare Workers com arquivos estáticos (a Cloudflare hoje encaminha projetos
 Um trigger em `pedidos` usa `pg_net` para chamar o webhook do n8n. A requisição só sai depois do COMMIT, então quando o n8n consulta o pedido ele já está completo (itens e total). O trigger de faturamento tem um `WHEN` que só dispara na transição para `concluido`: o n8n não recebe eventos que vai descartar.
 
 ### Segredos fora do código
-URLs dos webhooks e o segredo do header `X-Webhook-Secret` ficam no Supabase Vault; a migration só lê de lá. As chaves (Supabase service role, Evolution) ficam nas credenciais do n8n. O telefone do Rafael entra só no deploy, porque o repositório é público.
+URLs dos webhooks e o segredo do header `X-Webhook-Secret` ficam no Supabase Vault; a migration só lê de lá. As chaves (Supabase service role, Evolution) ficam nas credenciais do n8n. O destino das mensagens (um grupo do WhatsApp) entra só no deploy, porque o repositório é público.
 
 ### n8n busca o pedido de novo em vez de confiar no payload
 O evento de INSERT chega com `valor_total = 0` (os itens entram depois, na mesma transação). Consultar a view `vw_pedidos` pelo ID devolve o dado certo e já traz nome do cliente e técnico.

@@ -14,7 +14,7 @@ IDS = json.loads((RAIZ / 'ids.json').read_text(encoding='utf-8'))
 TZ = 'America/Sao_Paulo'
 VERSAO = 'v1.0 · 02/10/2026'
 PLANILHA_ID = '13OkBYxolO4HRbwPhkv9juVr-3mBw1y6zMUE1yyPf33o'
-TELEFONE_PADRAO = '55XXXXXXXXXXX'  # substituído no deploy por SMARTLAR_TELEFONE_RAFAEL
+DESTINO_PADRAO = 'DESTINO_WHATSAPP'  # substituído no deploy por SMARTLAR_WHATSAPP_DESTINO
 
 
 # ------------------------------------------------------------------ helpers
@@ -130,8 +130,8 @@ workflows['sub'] = {
              '## 📲 Enviar WhatsApp\n'
              'Sub-workflow: **único ponto de contato com a Evolution API**. '
              'As outras automações do SmartLar chamam este.\n\n'
-             '**Entrada**\n- `mensagem` (obrigatório)\n- `telefone` (opcional, padrão: Rafael)\n\n'
-             '**Configuração:** URL, instância e telefone padrão no nó *Config da Evolution*\n'
+             '**Entrada**\n- `mensagem` (obrigatório)\n- `telefone` (opcional, padrão: grupo de notificações do Rafael)\n\n'
+             '**Configuração:** URL, instância e destino padrão (número ou grupo) no nó *Config da Evolution*\n'
              '**Credencial:** SmartLar · Evolution API\n'
              '**Falhas:** 3 tentativas com 3s de intervalo; depois o erro sobe para quem chamou\n\n'
              f'`#smartlar` `#whatsapp` · `{VERSAO}`',
@@ -141,14 +141,14 @@ workflows['sub'] = {
         node('Config da Evolution', 'set', 3.4, [240, 0], campos(
             ('evolution_url', 'https://n8n-evolution-api.dnfcju.easypanel.host'),
             ('instancia', 'smartlar'),
-            ('telefone_padrao', TELEFONE_PADRAO),
+            ('destino_padrao', DESTINO_PADRAO),
             manter_outros=True)),
         node('Enviar mensagem (Evolution)', 'httpRequest', 4.2, [480, 0], {
             'method': 'POST',
             'url': '={{ $json.evolution_url }}/message/sendText/{{ $json.instancia }}',
             'authentication': 'genericCredentialType', 'genericAuthType': 'httpHeaderAuth',
             'sendBody': True, 'specifyBody': 'json',
-            'jsonBody': '={{ JSON.stringify({ number: $json.telefone || $json.telefone_padrao, text: $json.mensagem }) }}',
+            'jsonBody': '={{ JSON.stringify({ number: $json.telefone || $json.destino_padrao, text: $json.mensagem }) }}',
             'options': {}},
             credentials={'httpHeaderAuth': credencial('evolution')},
             retryOnFail=True, maxTries=3, waitBetweenTries=3000),
