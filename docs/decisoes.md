@@ -66,6 +66,10 @@ O total exibido enquanto o pedido é montado é calculado em centavos (inteiros)
 - Agenda: pensada para o técnico no celular. Agrupada por dia, com link para o endereço no Google Maps, link para o WhatsApp do cliente e lista do que instalar.
 - Telefone aceita qualquer formato na digitação e é salvo só com dígitos.
 
+## Deploy
+
+Cloudflare Workers com arquivos estáticos (a Cloudflare hoje encaminha projetos novos de Pages para Workers). O build do Vite é publicado com `npm run deploy`, e o modo `single-page-application` faz rotas como `/pedidos/123` abrirem direto no navegador, inclusive com F5. A URL do Supabase e a chave pública entram no build; a proteção dos dados é o RLS + login.
+
 ## Interpretações do enunciado
 - **Cancelamento**: a tabela do enunciado lista `... → concluido → cancelado`, mas as regras dizem que só `orcamento` e `aprovado` podem ser cancelados. Segui as regras. Se um pedido `agendado` puder ser cancelado, é uma linha a mais em `status_transicoes`.
 - **"Total de pedidos do mês"**: pedidos criados no mês atual, em qualquer status.

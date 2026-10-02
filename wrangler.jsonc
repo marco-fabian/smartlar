@@ -1,0 +1,10 @@
+{
+  "$schema": "./node_modules/wrangler/config-schema.json",
+  "name": "smartlar",
+  "compatibility_date": "2026-10-01",
+  "assets": {
+    "directory": "./dist",
+    // Rotas do React Router (/pedidos/123) caem no index.html
+    "not_found_handling": "single-page-application"
+  }
+}
