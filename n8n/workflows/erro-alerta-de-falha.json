@@ -1,0 +1,134 @@
+{
+  "name": "SmartLar | [Erro] Alerta de falha",
+  "nodes": [
+    {
+      "id": "38298395-b141-594a-885d-a65ea1d0cdfe",
+      "name": "Sobre este workflow",
+      "type": "n8n-nodes-base.stickyNote",
+      "typeVersion": 1,
+      "position": [
+        -60,
+        -320
+      ],
+      "parameters": {
+        "content": "## 🚨 Alerta de falha\nWorkflow de erro de todas as automações do SmartLar (*Settings → Error workflow*).\n\nQuando uma execução falha, manda no WhatsApp: workflow, nó, mensagem de erro e link da execução.\n\n`#smartlar` `#monitoramento` · `v1.0 · 02/10/2026`",
+        "width": 700,
+        "height": 280,
+        "color": 3
+      }
+    },
+    {
+      "id": "c3fc2744-191c-5891-86b9-e2fe50f9e102",
+      "name": "Quando um workflow falhar",
+      "type": "n8n-nodes-base.errorTrigger",
+      "typeVersion": 1,
+      "position": [
+        0,
+        0
+      ],
+      "parameters": {}
+    },
+    {
+      "id": "3ff2b81e-55af-5b43-a10d-93693519d559",
+      "name": "Montar alerta",
+      "type": "n8n-nodes-base.set",
+      "typeVersion": 3.4,
+      "position": [
+        240,
+        0
+      ],
+      "parameters": {
+        "assignments": {
+          "assignments": [
+            {
+              "id": "d8626b19-275a-5928-9173-921570c5a28f",
+              "name": "mensagem",
+              "value": "=⚠️ *SmartLar · falha em automação*\n\n*Workflow:* {{ $json.workflow.name }}\n*Nó:* {{ $json.execution.lastNodeExecuted }}\n*Erro:* {{ $json.execution.error.message }}\n*Quando:* {{ $now.setZone('America/Sao_Paulo').toFormat('dd/MM HH:mm') }}\n\n🔗 {{ $json.execution.url }}",
+              "type": "string"
+            }
+          ]
+        },
+        "options": {}
+      }
+    },
+    {
+      "id": "0eb8b28c-a83a-5ab0-b525-ef19511154ef",
+      "name": "Enviar alerta no WhatsApp",
+      "type": "n8n-nodes-base.executeWorkflow",
+      "typeVersion": 1.3,
+      "position": [
+        480,
+        0
+      ],
+      "parameters": {
+        "workflowId": {
+          "__rl": true,
+          "value": "Z6Z4It2WacDz1cu3",
+          "mode": "list",
+          "cachedResultName": "SmartLar | [Sub] Enviar WhatsApp"
+        },
+        "workflowInputs": {
+          "mappingMode": "defineBelow",
+          "value": {
+            "mensagem": "={{ $json.mensagem }}"
+          },
+          "matchingColumns": [],
+          "schema": [
+            {
+              "id": "mensagem",
+              "displayName": "mensagem",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "canBeUsedToMatch": true,
+              "type": "string",
+              "removed": false
+            },
+            {
+              "id": "telefone",
+              "displayName": "telefone",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "canBeUsedToMatch": true,
+              "type": "string",
+              "removed": true
+            }
+          ],
+          "attemptToConvertTypes": false,
+          "convertFieldsToString": true
+        },
+        "options": {}
+      }
+    }
+  ],
+  "connections": {
+    "Quando um workflow falhar": {
+      "main": [
+        [
+          {
+            "node": "Montar alerta",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Montar alerta": {
+      "main": [
+        [
+          {
+            "node": "Enviar alerta no WhatsApp",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "settings": {
+    "executionOrder": "v1",
+    "timezone": "America/Sao_Paulo",
+    "saveManualExecutions": true
+  }
+}

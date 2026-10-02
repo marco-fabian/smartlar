@@ -70,12 +70,38 @@ O total exibido enquanto o pedido é montado é calculado em centavos (inteiros)
 
 Cloudflare Workers com arquivos estáticos (a Cloudflare hoje encaminha projetos novos de Pages para Workers). O build do Vite é publicado com `npm run deploy`, e o modo `single-page-application` faz rotas como `/pedidos/123` abrirem direto no navegador, inclusive com F5. A URL do Supabase e a chave pública entram no build; a proteção dos dados é o RLS + login.
 
+## Automações (n8n)
+
+### Supabase chama o n8n por trigger, não por polling
+Um trigger em `pedidos` usa `pg_net` para chamar o webhook do n8n. A requisição só sai depois do COMMIT, então quando o n8n consulta o pedido ele já está completo (itens e total). O trigger de faturamento tem um `WHEN` que só dispara na transição para `concluido`: o n8n não recebe eventos que vai descartar.
+
+### Segredos fora do código
+URLs dos webhooks e o segredo do header `X-Webhook-Secret` ficam no Supabase Vault; a migration só lê de lá. As chaves (Supabase service role, Evolution) ficam nas credenciais do n8n. O telefone do Rafael entra só no deploy, porque o repositório é público.
+
+### n8n busca o pedido de novo em vez de confiar no payload
+O evento de INSERT chega com `valor_total = 0` (os itens entram depois, na mesma transação). Consultar a view `vw_pedidos` pelo ID devolve o dado certo e já traz nome do cliente e técnico.
+
+### Sub-workflow para o WhatsApp
+Três automações mandam WhatsApp. A chamada à Evolution API fica num lugar só (com retry de 3 tentativas): trocar de provedor (ex: API oficial da Meta) é mexer em um workflow.
+
+### Tratamento de erro
+Todas as automações apontam para *[Erro] Alerta de falha*, que manda no WhatsApp o workflow, o nó, o erro e o link da execução. O resumo diário avisa também quando não há instalações, assim dá pra saber que a rotina rodou. O faturamento usa *append or update* pelo ID do pedido: se o evento chegar duas vezes, a linha não duplica.
+
+### Sem nó de código
+Datas com Luxon nas expressões, filtros no nó do Supabase, IF para o caso "sem instalações", Sort + Aggregate para montar a lista. O fluxo fica legível no canvas.
+
+### Workflows versionados no repositório
+`n8n/build.py` gera os JSON em `n8n/workflows/` e `n8n/deploy.py` publica pela API do n8n. O JSON no git é a fonte da verdade; o histórico de versões do n8n fica como segunda camada.
+
 ## Interpretações do enunciado
 - **Cancelamento**: a tabela do enunciado lista `... → concluido → cancelado`, mas as regras dizem que só `orcamento` e `aprovado` podem ser cancelados. Segui as regras. Se um pedido `agendado` puder ser cancelado, é uma linha a mais em `status_transicoes`.
 - **"Total de pedidos do mês"**: pedidos criados no mês atual, em qualquer status.
 - **"Valor a receber"**: soma dos pedidos `aprovado`, `agendado` e `em_andamento`, sem filtro de mês.
 
 ## Limitações conhecidas / próximos passos
+- WhatsApp pela Evolution API (não oficial, risco de bloqueio do número). Em produção: API oficial da Meta (Cloud API).
+- Se o n8n estiver fora do ar, o `pg_net` registra a falha em `net._http_response` mas não reenvia. Com mais tempo: fila com retry (ou reprocessar pela tabela de respostas).
+- Os técnicos ainda não recebem a própria agenda no WhatsApp: o sub-workflow já aceita `telefone`, então seria um envio por técnico no resumo diário.
 - Um único perfil de acesso: técnicos não têm login próprio. Com mais tempo: papéis (admin/técnico) e RLS por técnico.
 - Categorias são uma lista fixa (`check`). Se o Rafael precisar criar categorias, viram tabela própria.
 - Sem controle de pagamento parcial/recebido: "a receber" é uma estimativa pelo status.

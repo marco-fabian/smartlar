@@ -1,0 +1,284 @@
+{
+  "name": "SmartLar | Novo pedido → WhatsApp",
+  "nodes": [
+    {
+      "id": "68b07a0d-5c64-5fa9-8e90-1a70ec09fc20",
+      "name": "Sobre este workflow",
+      "type": "n8n-nodes-base.stickyNote",
+      "typeVersion": 1,
+      "position": [
+        -60,
+        -420
+      ],
+      "parameters": {
+        "content": "## 🆕 Novo pedido → WhatsApp\n**Automação 1 (obrigatória).** Avisa o Rafael no WhatsApp sempre que um orçamento é criado.\n\n**Gatilho:** trigger `pedidos_notificar_novo` no Supabase (pg_net) → webhook autenticado pelo header `X-Webhook-Secret`\n**Destino:** WhatsApp do Rafael, via *[Sub] Enviar WhatsApp*\n**Falhas:** *[Erro] Alerta de falha*\n\n`#smartlar` `#supabase` `#whatsapp` · `v1.0 · 02/10/2026`",
+        "width": 1260,
+        "height": 300,
+        "color": 6
+      }
+    },
+    {
+      "id": "56aa2f23-5c23-5faa-ae48-cb90705a6f2b",
+      "name": "Etapa 1",
+      "type": "n8n-nodes-base.stickyNote",
+      "typeVersion": 1,
+      "position": [
+        -60,
+        -100
+      ],
+      "parameters": {
+        "content": "### 1. Recebe o evento\nSó segue se for INSERT de pedido em `orcamento`.",
+        "width": 460,
+        "height": 320
+      }
+    },
+    {
+      "id": "dc13b048-b01a-516c-adcc-1d7089038ebe",
+      "name": "Etapa 2",
+      "type": "n8n-nodes-base.stickyNote",
+      "typeVersion": 1,
+      "position": [
+        420,
+        -100
+      ],
+      "parameters": {
+        "content": "### 2. Busca os dados atualizados\nO evento chega com `valor_total = 0` (os itens entram depois, na mesma transação). Por isso o pedido é consultado de novo na view `vw_pedidos`, já com cliente e total.",
+        "width": 280,
+        "height": 320
+      }
+    },
+    {
+      "id": "fb526daa-66c3-5535-aa8f-5dea748d5741",
+      "name": "Etapa 3",
+      "type": "n8n-nodes-base.stickyNote",
+      "typeVersion": 1,
+      "position": [
+        720,
+        -100
+      ],
+      "parameters": {
+        "content": "### 3. Notifica",
+        "width": 480,
+        "height": 320
+      }
+    },
+    {
+      "id": "ba242447-587f-5328-b4f0-f356be88609a",
+      "name": "Pedido criado (Supabase)",
+      "type": "n8n-nodes-base.webhook",
+      "typeVersion": 2.1,
+      "position": [
+        0,
+        60
+      ],
+      "parameters": {
+        "httpMethod": "POST",
+        "path": "smartlar/novo-pedido",
+        "authentication": "headerAuth",
+        "options": {}
+      },
+      "webhookId": "d1d16f61-97c4-5d7c-97a8-5e12e1225b8b",
+      "credentials": {
+        "httpHeaderAuth": {
+          "id": "v5A6YGyJ9Sjq0pGi",
+          "name": "SmartLar · Webhook Supabase"
+        }
+      }
+    },
+    {
+      "id": "178f358e-6422-519a-a885-81f097681951",
+      "name": "É um orçamento novo?",
+      "type": "n8n-nodes-base.filter",
+      "typeVersion": 2.2,
+      "position": [
+        220,
+        60
+      ],
+      "parameters": {
+        "conditions": {
+          "options": {
+            "caseSensitive": true,
+            "leftValue": "",
+            "typeValidation": "strict",
+            "version": 2
+          },
+          "conditions": [
+            {
+              "id": "73406eb6-f3ee-5f99-9b1c-e8c764da9cb4",
+              "leftValue": "={{ $json.body.type }}",
+              "rightValue": "INSERT",
+              "operator": {
+                "type": "string",
+                "operation": "equals"
+              }
+            },
+            {
+              "id": "852f167b-f6a7-59bc-9359-77c2244d0519",
+              "leftValue": "={{ $json.body.record.status }}",
+              "rightValue": "orcamento",
+              "operator": {
+                "type": "string",
+                "operation": "equals"
+              }
+            }
+          ],
+          "combinator": "and"
+        },
+        "options": {}
+      }
+    },
+    {
+      "id": "37451146-830b-5cc9-8bf2-ed63b530d4e3",
+      "name": "Buscar pedido completo",
+      "type": "n8n-nodes-base.supabase",
+      "typeVersion": 1,
+      "position": [
+        480,
+        60
+      ],
+      "parameters": {
+        "operation": "get",
+        "tableId": "vw_pedidos",
+        "filters": {
+          "conditions": [
+            {
+              "keyName": "id",
+              "keyValue": "={{ $json.body.record.id }}"
+            }
+          ]
+        }
+      },
+      "credentials": {
+        "supabaseApi": {
+          "id": "or4eVz51hshmnh3Q",
+          "name": "SmartLar · Supabase (service role)"
+        }
+      }
+    },
+    {
+      "id": "c9ad0ad7-5021-5ee5-9a6c-d9bfb1a6c1b2",
+      "name": "Montar mensagem",
+      "type": "n8n-nodes-base.set",
+      "typeVersion": 3.4,
+      "position": [
+        780,
+        60
+      ],
+      "parameters": {
+        "assignments": {
+          "assignments": [
+            {
+              "id": "91b1054c-19b2-5ee5-bcb4-67c6ef795c9a",
+              "name": "mensagem",
+              "value": "=🆕 *Novo orçamento #{{ $json.numero }}*\n\n👤 {{ $json.cliente_nome }}\n📞 {{ $json.cliente_telefone.replace(/^55(\\d{2})(\\d{4,5})(\\d{4})$/, '($1) $2-$3') }}\n💰 {{ Number($json.valor_total).toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' }) }}\n📅 {{ DateTime.fromISO($json.created_at).setZone('America/Sao_Paulo').toFormat(\"dd/MM/yyyy 'às' HH:mm\") }}{{ $json.observacoes ? '\\n📝 ' + $json.observacoes : '' }}",
+              "type": "string"
+            }
+          ]
+        },
+        "options": {}
+      }
+    },
+    {
+      "id": "6ffc3150-40b8-5398-8d80-202696c21aa1",
+      "name": "Enviar no WhatsApp",
+      "type": "n8n-nodes-base.executeWorkflow",
+      "typeVersion": 1.3,
+      "position": [
+        1000,
+        60
+      ],
+      "parameters": {
+        "workflowId": {
+          "__rl": true,
+          "value": "Z6Z4It2WacDz1cu3",
+          "mode": "list",
+          "cachedResultName": "SmartLar | [Sub] Enviar WhatsApp"
+        },
+        "workflowInputs": {
+          "mappingMode": "defineBelow",
+          "value": {
+            "mensagem": "={{ $json.mensagem }}"
+          },
+          "matchingColumns": [],
+          "schema": [
+            {
+              "id": "mensagem",
+              "displayName": "mensagem",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "canBeUsedToMatch": true,
+              "type": "string",
+              "removed": false
+            },
+            {
+              "id": "telefone",
+              "displayName": "telefone",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "canBeUsedToMatch": true,
+              "type": "string",
+              "removed": true
+            }
+          ],
+          "attemptToConvertTypes": false,
+          "convertFieldsToString": true
+        },
+        "options": {}
+      }
+    }
+  ],
+  "connections": {
+    "Pedido criado (Supabase)": {
+      "main": [
+        [
+          {
+            "node": "É um orçamento novo?",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "É um orçamento novo?": {
+      "main": [
+        [
+          {
+            "node": "Buscar pedido completo",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Buscar pedido completo": {
+      "main": [
+        [
+          {
+            "node": "Montar mensagem",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Montar mensagem": {
+      "main": [
+        [
+          {
+            "node": "Enviar no WhatsApp",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "settings": {
+    "executionOrder": "v1",
+    "timezone": "America/Sao_Paulo",
+    "saveManualExecutions": true,
+    "errorWorkflow": "Je3JpNLKg1mMNqVJ"
+  }
+}

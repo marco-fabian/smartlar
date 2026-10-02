@@ -1,0 +1,27 @@
+{
+  "credenciais": {
+    "supabase": {
+      "id": "or4eVz51hshmnh3Q",
+      "name": "SmartLar · Supabase (service role)"
+    },
+    "evolution": {
+      "id": "tlNRxTw4qmkQnkIX",
+      "name": "SmartLar · Evolution API"
+    },
+    "webhook": {
+      "id": "v5A6YGyJ9Sjq0pGi",
+      "name": "SmartLar · Webhook Supabase"
+    },
+    "google_sheets": {
+      "id": "xNM7JPD0hsXt7ANG",
+      "name": "Google Sheets account"
+    }
+  },
+  "workflows": {
+    "sub": "Z6Z4It2WacDz1cu3",
+    "erro": "Je3JpNLKg1mMNqVJ",
+    "novo_pedido": "hTRK0TbozvDhYkQh",
+    "amanha": "SBkSZ7TVOYUycD5H",
+    "faturamento": "FxiS8Wd2PqPv4NJH"
+  }
+}

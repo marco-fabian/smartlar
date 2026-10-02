@@ -1,0 +1,138 @@
+{
+  "name": "SmartLar | [Sub] Enviar WhatsApp",
+  "nodes": [
+    {
+      "id": "f9f0a13c-63a9-5477-bc51-164174e96c9e",
+      "name": "Sobre este workflow",
+      "type": "n8n-nodes-base.stickyNote",
+      "typeVersion": 1,
+      "position": [
+        -60,
+        -400
+      ],
+      "parameters": {
+        "content": "## 📲 Enviar WhatsApp\nSub-workflow: **único ponto de contato com a Evolution API**. As outras automações do SmartLar chamam este.\n\n**Entrada**\n- `mensagem` (obrigatório)\n- `telefone` (opcional, padrão: Rafael)\n\n**Configuração:** URL, instância e telefone padrão no nó *Config da Evolution*\n**Credencial:** SmartLar · Evolution API\n**Falhas:** 3 tentativas com 3s de intervalo; depois o erro sobe para quem chamou\n\n`#smartlar` `#whatsapp` · `v1.0 · 02/10/2026`",
+        "width": 700,
+        "height": 360,
+        "color": 6
+      }
+    },
+    {
+      "id": "c7de52a8-3776-59dd-a908-3e76d0f2ba82",
+      "name": "Quando chamado",
+      "type": "n8n-nodes-base.executeWorkflowTrigger",
+      "typeVersion": 1.1,
+      "position": [
+        0,
+        0
+      ],
+      "parameters": {
+        "workflowInputs": {
+          "values": [
+            {
+              "name": "mensagem"
+            },
+            {
+              "name": "telefone"
+            }
+          ]
+        }
+      }
+    },
+    {
+      "id": "6539fdbc-4a4f-5d48-9698-3de849dc5f48",
+      "name": "Config da Evolution",
+      "type": "n8n-nodes-base.set",
+      "typeVersion": 3.4,
+      "position": [
+        240,
+        0
+      ],
+      "parameters": {
+        "assignments": {
+          "assignments": [
+            {
+              "id": "0e459b32-8bd0-5a62-9c7b-23ad16cb3fff",
+              "name": "evolution_url",
+              "value": "https://n8n-evolution-api.dnfcju.easypanel.host",
+              "type": "string"
+            },
+            {
+              "id": "f0d78df7-2a05-544e-ac24-9969f47979e1",
+              "name": "instancia",
+              "value": "smartlar",
+              "type": "string"
+            },
+            {
+              "id": "cab661ac-5d59-5edd-9939-4e9760d2e98b",
+              "name": "telefone_padrao",
+              "value": "55XXXXXXXXXXX",
+              "type": "string"
+            }
+          ]
+        },
+        "options": {},
+        "includeOtherFields": true
+      }
+    },
+    {
+      "id": "1ffe2ff1-1833-52f4-b93e-090cd3202a12",
+      "name": "Enviar mensagem (Evolution)",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        480,
+        0
+      ],
+      "parameters": {
+        "method": "POST",
+        "url": "={{ $json.evolution_url }}/message/sendText/{{ $json.instancia }}",
+        "authentication": "genericCredentialType",
+        "genericAuthType": "httpHeaderAuth",
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "={{ JSON.stringify({ number: $json.telefone || $json.telefone_padrao, text: $json.mensagem }) }}",
+        "options": {}
+      },
+      "credentials": {
+        "httpHeaderAuth": {
+          "id": "tlNRxTw4qmkQnkIX",
+          "name": "SmartLar · Evolution API"
+        }
+      },
+      "retryOnFail": true,
+      "maxTries": 3,
+      "waitBetweenTries": 3000
+    }
+  ],
+  "connections": {
+    "Quando chamado": {
+      "main": [
+        [
+          {
+            "node": "Config da Evolution",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Config da Evolution": {
+      "main": [
+        [
+          {
+            "node": "Enviar mensagem (Evolution)",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "settings": {
+    "executionOrder": "v1",
+    "timezone": "America/Sao_Paulo",
+    "saveManualExecutions": true,
+    "callerPolicy": "workflowsFromSameOwner"
+  }
+}

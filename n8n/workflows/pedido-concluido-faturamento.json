@@ -1,0 +1,268 @@
+{
+  "name": "SmartLar | Pedido concluído → Faturamento (Sheets)",
+  "nodes": [
+    {
+      "id": "f05a43c6-6f82-5a2c-808c-a85ecf28c753",
+      "name": "Sobre este workflow",
+      "type": "n8n-nodes-base.stickyNote",
+      "typeVersion": 1,
+      "position": [
+        -60,
+        -420
+      ],
+      "parameters": {
+        "content": "## 💰 Pedido concluído → Faturamento\n**Automação 3 (bônus).** Cada pedido concluído vira uma linha na planilha *SmartLar · Faturamento*: o começo de um controle financeiro.\n\n**Gatilho:** trigger `pedidos_notificar_concluido` (só dispara na transição para `concluido`)\n**Idempotente:** *append or update* pela coluna *ID do pedido*. Se o evento chegar duas vezes, a linha não duplica.\n**Falhas:** *[Erro] Alerta de falha*\n\n`#smartlar` `#supabase` `#google-sheets` · `v1.0 · 02/10/2026`",
+        "width": 1060,
+        "height": 320,
+        "color": 6
+      }
+    },
+    {
+      "id": "dd4e9607-3016-5737-94c1-e22c720cd995",
+      "name": "Pedido concluído (Supabase)",
+      "type": "n8n-nodes-base.webhook",
+      "typeVersion": 2.1,
+      "position": [
+        0,
+        60
+      ],
+      "parameters": {
+        "httpMethod": "POST",
+        "path": "smartlar/pedido-concluido",
+        "authentication": "headerAuth",
+        "options": {}
+      },
+      "webhookId": "854e85b2-61ee-5911-8145-9f3d6c77ed2d",
+      "credentials": {
+        "httpHeaderAuth": {
+          "id": "v5A6YGyJ9Sjq0pGi",
+          "name": "SmartLar · Webhook Supabase"
+        }
+      }
+    },
+    {
+      "id": "dd848bcf-2b5a-5d33-bb36-d69bf1106466",
+      "name": "Mudou para concluído?",
+      "type": "n8n-nodes-base.filter",
+      "typeVersion": 2.2,
+      "position": [
+        220,
+        60
+      ],
+      "parameters": {
+        "conditions": {
+          "options": {
+            "caseSensitive": true,
+            "leftValue": "",
+            "typeValidation": "strict",
+            "version": 2
+          },
+          "conditions": [
+            {
+              "id": "73f3c8af-a64b-59f7-b23a-eca6a0dd6101",
+              "leftValue": "={{ $json.body.record.status }}",
+              "rightValue": "concluido",
+              "operator": {
+                "type": "string",
+                "operation": "equals"
+              }
+            },
+            {
+              "id": "83121269-6dfc-5909-949e-7f9e7fb3ff9f",
+              "leftValue": "={{ $json.body.old_record.status }}",
+              "rightValue": "concluido",
+              "operator": {
+                "type": "string",
+                "operation": "notEquals"
+              }
+            }
+          ],
+          "combinator": "and"
+        },
+        "options": {}
+      }
+    },
+    {
+      "id": "2cd0307f-3bf4-598c-bcc3-a2e7515592c2",
+      "name": "Buscar pedido completo",
+      "type": "n8n-nodes-base.supabase",
+      "typeVersion": 1,
+      "position": [
+        480,
+        60
+      ],
+      "parameters": {
+        "operation": "get",
+        "tableId": "vw_pedidos",
+        "filters": {
+          "conditions": [
+            {
+              "keyName": "id",
+              "keyValue": "={{ $json.body.record.id }}"
+            }
+          ]
+        }
+      },
+      "credentials": {
+        "supabaseApi": {
+          "id": "or4eVz51hshmnh3Q",
+          "name": "SmartLar · Supabase (service role)"
+        }
+      }
+    },
+    {
+      "id": "89039de0-1191-59c8-922d-cdc8a8e6eb33",
+      "name": "Registrar no Google Sheets",
+      "type": "n8n-nodes-base.googleSheets",
+      "typeVersion": 4.7,
+      "position": [
+        760,
+        60
+      ],
+      "parameters": {
+        "operation": "appendOrUpdate",
+        "documentId": {
+          "__rl": true,
+          "value": "13OkBYxolO4HRbwPhkv9juVr-3mBw1y6zMUE1yyPf33o",
+          "mode": "id"
+        },
+        "sheetName": {
+          "__rl": true,
+          "value": "gid=0",
+          "mode": "list",
+          "cachedResultName": "Página1"
+        },
+        "columns": {
+          "mappingMode": "defineBelow",
+          "value": {
+            "Concluído em": "={{ DateTime.fromISO($json.concluido_em).setZone('America/Sao_Paulo').toFormat('dd/MM/yyyy HH:mm') }}",
+            "Pedido": "=#{{ $json.numero }}",
+            "Cliente": "={{ $json.cliente_nome }}",
+            "Valor (R$)": "={{ $json.valor_total }}",
+            "Forma de pagamento": "={{ ({ pix: 'Pix', cartao_credito: 'Cartão de crédito', cartao_debito: 'Cartão de débito', boleto: 'Boleto', dinheiro: 'Dinheiro' })[$json.forma_pagamento] }}",
+            "Técnico": "={{ $json.tecnico_nome }}",
+            "ID do pedido": "={{ $json.id }}"
+          },
+          "matchingColumns": [
+            "ID do pedido"
+          ],
+          "schema": [
+            {
+              "id": "Concluído em",
+              "displayName": "Concluído em",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "Pedido",
+              "displayName": "Pedido",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "Cliente",
+              "displayName": "Cliente",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "Valor (R$)",
+              "displayName": "Valor (R$)",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "Forma de pagamento",
+              "displayName": "Forma de pagamento",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "Técnico",
+              "displayName": "Técnico",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "ID do pedido",
+              "displayName": "ID do pedido",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            }
+          ],
+          "attemptToConvertTypes": false,
+          "convertFieldsToString": false
+        },
+        "options": {}
+      },
+      "credentials": {
+        "googleSheetsOAuth2Api": {
+          "id": "xNM7JPD0hsXt7ANG",
+          "name": "Google Sheets account"
+        }
+      }
+    }
+  ],
+  "connections": {
+    "Pedido concluído (Supabase)": {
+      "main": [
+        [
+          {
+            "node": "Mudou para concluído?",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Mudou para concluído?": {
+      "main": [
+        [
+          {
+            "node": "Buscar pedido completo",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Buscar pedido completo": {
+      "main": [
+        [
+          {
+            "node": "Registrar no Google Sheets",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "settings": {
+    "executionOrder": "v1",
+    "timezone": "America/Sao_Paulo",
+    "saveManualExecutions": true,
+    "errorWorkflow": "Je3JpNLKg1mMNqVJ"
+  }
+}

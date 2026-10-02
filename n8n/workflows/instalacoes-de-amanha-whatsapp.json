@@ -1,0 +1,417 @@
+{
+  "name": "SmartLar | Instalações de amanhã → WhatsApp",
+  "nodes": [
+    {
+      "id": "225b4b73-10ef-51a3-a8df-80906e1fb6d4",
+      "name": "Sobre este workflow",
+      "type": "n8n-nodes-base.stickyNote",
+      "typeVersion": 1,
+      "position": [
+        -60,
+        -440
+      ],
+      "parameters": {
+        "content": "## 📋 Instalações de amanhã → WhatsApp\n**Automação 2 (obrigatória).** Todo dia às 18h manda pro Rafael o resumo das instalações do dia seguinte: horário, técnico, cliente e endereço.\n\n**Fuso:** America/Sao_Paulo. O banco guarda em UTC; a janela de \"amanhã\" é calculada em SP.\n**Sem instalações:** manda um aviso mesmo assim, pra confirmar que a rotina rodou.\n**Falhas:** *[Erro] Alerta de falha*\n\n`#smartlar` `#supabase` `#whatsapp` `#agendado` · `v1.0 · 02/10/2026`",
+        "width": 1820,
+        "height": 320,
+        "color": 6
+      }
+    },
+    {
+      "id": "a008c15d-7176-562b-a398-65beaec3ee82",
+      "name": "Etapa 1",
+      "type": "n8n-nodes-base.stickyNote",
+      "typeVersion": 1,
+      "position": [
+        -60,
+        -100
+      ],
+      "parameters": {
+        "content": "### 1. Consulta o banco\nPedidos `agendado` com `data_instalacao` de 00:00 até 23:59 de amanhã.\n*Always Output Data* ligado na busca: sem resultado, o fluxo segue para o aviso.",
+        "width": 900,
+        "height": 520
+      }
+    },
+    {
+      "id": "a9416105-29ed-5478-acd4-44bd448bd728",
+      "name": "Etapa 2",
+      "type": "n8n-nodes-base.stickyNote",
+      "typeVersion": 1,
+      "position": [
+        860,
+        -100
+      ],
+      "parameters": {
+        "content": "### 2. Monta e envia o resumo",
+        "width": 900,
+        "height": 520
+      }
+    },
+    {
+      "id": "dcfaf43a-439e-5a7d-8009-e089a4537a15",
+      "name": "Todo dia às 18h",
+      "type": "n8n-nodes-base.scheduleTrigger",
+      "typeVersion": 1.2,
+      "position": [
+        0,
+        100
+      ],
+      "parameters": {
+        "rule": {
+          "interval": [
+            {
+              "field": "days",
+              "triggerAtHour": 18
+            }
+          ]
+        }
+      }
+    },
+    {
+      "id": "96a3622a-0811-5a10-b28f-91e79141c5ff",
+      "name": "Definir período de amanhã",
+      "type": "n8n-nodes-base.set",
+      "typeVersion": 3.4,
+      "position": [
+        240,
+        100
+      ],
+      "parameters": {
+        "assignments": {
+          "assignments": [
+            {
+              "id": "c4aa9f1e-8792-5623-bd3a-0393260af8ff",
+              "name": "inicio",
+              "value": "={{ $now.setZone('America/Sao_Paulo').plus({ days: 1 }).startOf('day').toUTC().toISO() }}",
+              "type": "string"
+            },
+            {
+              "id": "8453b7ea-0d82-56ba-aa5f-aa801917a4a2",
+              "name": "fim",
+              "value": "={{ $now.setZone('America/Sao_Paulo').plus({ days: 2 }).startOf('day').toUTC().toISO() }}",
+              "type": "string"
+            },
+            {
+              "id": "882ea2cc-7f9b-5082-aa09-c9bc826f8ad1",
+              "name": "data_label",
+              "value": "={{ $now.setZone('America/Sao_Paulo').plus({ days: 1 }).startOf('day').setLocale('pt-BR').toFormat('cccc, dd/MM') }}",
+              "type": "string"
+            }
+          ]
+        },
+        "options": {}
+      }
+    },
+    {
+      "id": "b1a15e87-4ded-5c31-b4ee-dfb595c673aa",
+      "name": "Buscar instalações de amanhã",
+      "type": "n8n-nodes-base.supabase",
+      "typeVersion": 1,
+      "position": [
+        480,
+        100
+      ],
+      "parameters": {
+        "operation": "getAll",
+        "tableId": "vw_pedidos",
+        "returnAll": true,
+        "filterType": "manual",
+        "matchType": "allFilters",
+        "filters": {
+          "conditions": [
+            {
+              "keyName": "status",
+              "condition": "eq",
+              "keyValue": "agendado"
+            },
+            {
+              "keyName": "data_instalacao",
+              "condition": "gte",
+              "keyValue": "={{ $json.inicio }}"
+            },
+            {
+              "keyName": "data_instalacao",
+              "condition": "lt",
+              "keyValue": "={{ $json.fim }}"
+            }
+          ]
+        }
+      },
+      "credentials": {
+        "supabaseApi": {
+          "id": "or4eVz51hshmnh3Q",
+          "name": "SmartLar · Supabase (service role)"
+        }
+      },
+      "alwaysOutputData": true
+    },
+    {
+      "id": "347192e0-9617-5f3a-ae1d-f2b1fe37c41e",
+      "name": "Tem instalação amanhã?",
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2.2,
+      "position": [
+        720,
+        100
+      ],
+      "parameters": {
+        "conditions": {
+          "options": {
+            "caseSensitive": true,
+            "leftValue": "",
+            "typeValidation": "strict",
+            "version": 2
+          },
+          "conditions": [
+            {
+              "id": "a9321848-f9f7-5551-b531-618adb7ef879",
+              "leftValue": "={{ $json.id }}",
+              "rightValue": "",
+              "operator": {
+                "type": "string",
+                "operation": "exists",
+                "singleValue": true
+              }
+            }
+          ],
+          "combinator": "and"
+        },
+        "options": {}
+      }
+    },
+    {
+      "id": "3565740c-5dd0-5182-b396-531a8a8ebab4",
+      "name": "Ordenar por horário",
+      "type": "n8n-nodes-base.sort",
+      "typeVersion": 1,
+      "position": [
+        960,
+        0
+      ],
+      "parameters": {
+        "sortFieldsUi": {
+          "sortField": [
+            {
+              "fieldName": "data_instalacao"
+            }
+          ]
+        },
+        "options": {}
+      }
+    },
+    {
+      "id": "b3688ec8-28c7-5c34-b1dd-c69f564921f7",
+      "name": "Agrupar em uma lista",
+      "type": "n8n-nodes-base.aggregate",
+      "typeVersion": 1,
+      "position": [
+        1180,
+        0
+      ],
+      "parameters": {
+        "aggregate": "aggregateAllItemData",
+        "destinationFieldName": "instalacoes",
+        "options": {}
+      }
+    },
+    {
+      "id": "91ef12a4-227d-57da-bf9d-3217da171d1f",
+      "name": "Montar resumo do dia",
+      "type": "n8n-nodes-base.set",
+      "typeVersion": 3.4,
+      "position": [
+        1400,
+        0
+      ],
+      "parameters": {
+        "assignments": {
+          "assignments": [
+            {
+              "id": "cf34eb45-5cf5-5567-a9d1-24f9da33dd91",
+              "name": "mensagem",
+              "value": "=📋 *Instalações de amanhã ({{ $('Definir período de amanhã').first().json.data_label }})*\n\n{{ $json.instalacoes.map(i => '🕐 *' + DateTime.fromISO(i.data_instalacao).setZone('America/Sao_Paulo').toFormat('HH:mm') + '* · ' + i.tecnico_nome + '\\n👤 ' + i.cliente_nome + '\\n📍 ' + i.cliente_endereco).join('\\n\\n') }}\n\nTotal: {{ $json.instalacoes.length }} {{ $json.instalacoes.length === 1 ? 'instalação' : 'instalações' }}",
+              "type": "string"
+            }
+          ]
+        },
+        "options": {}
+      }
+    },
+    {
+      "id": "ce94e220-a6c6-5edb-ae55-aac394d1e4df",
+      "name": "Montar aviso sem instalações",
+      "type": "n8n-nodes-base.set",
+      "typeVersion": 3.4,
+      "position": [
+        1180,
+        240
+      ],
+      "parameters": {
+        "assignments": {
+          "assignments": [
+            {
+              "id": "2fb1e75d-49b4-5f7b-90e3-db00400866b0",
+              "name": "mensagem",
+              "value": "=📋 *Instalações de amanhã ({{ $('Definir período de amanhã').first().json.data_label }})*\n\nNenhuma instalação agendada. ✅",
+              "type": "string"
+            }
+          ]
+        },
+        "options": {}
+      }
+    },
+    {
+      "id": "8fb6efba-ada6-5a79-b0cc-4e85fdb9fd35",
+      "name": "Enviar resumo no WhatsApp",
+      "type": "n8n-nodes-base.executeWorkflow",
+      "typeVersion": 1.3,
+      "position": [
+        1620,
+        100
+      ],
+      "parameters": {
+        "workflowId": {
+          "__rl": true,
+          "value": "Z6Z4It2WacDz1cu3",
+          "mode": "list",
+          "cachedResultName": "SmartLar | [Sub] Enviar WhatsApp"
+        },
+        "workflowInputs": {
+          "mappingMode": "defineBelow",
+          "value": {
+            "mensagem": "={{ $json.mensagem }}"
+          },
+          "matchingColumns": [],
+          "schema": [
+            {
+              "id": "mensagem",
+              "displayName": "mensagem",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "canBeUsedToMatch": true,
+              "type": "string",
+              "removed": false
+            },
+            {
+              "id": "telefone",
+              "displayName": "telefone",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "canBeUsedToMatch": true,
+              "type": "string",
+              "removed": true
+            }
+          ],
+          "attemptToConvertTypes": false,
+          "convertFieldsToString": true
+        },
+        "options": {}
+      }
+    }
+  ],
+  "connections": {
+    "Todo dia às 18h": {
+      "main": [
+        [
+          {
+            "node": "Definir período de amanhã",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Definir período de amanhã": {
+      "main": [
+        [
+          {
+            "node": "Buscar instalações de amanhã",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Buscar instalações de amanhã": {
+      "main": [
+        [
+          {
+            "node": "Tem instalação amanhã?",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Tem instalação amanhã?": {
+      "main": [
+        [
+          {
+            "node": "Ordenar por horário",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Montar aviso sem instalações",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Ordenar por horário": {
+      "main": [
+        [
+          {
+            "node": "Agrupar em uma lista",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Agrupar em uma lista": {
+      "main": [
+        [
+          {
+            "node": "Montar resumo do dia",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Montar resumo do dia": {
+      "main": [
+        [
+          {
+            "node": "Enviar resumo no WhatsApp",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Montar aviso sem instalações": {
+      "main": [
+        [
+          {
+            "node": "Enviar resumo no WhatsApp",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "settings": {
+    "executionOrder": "v1",
+    "timezone": "America/Sao_Paulo",
+    "saveManualExecutions": true,
+    "errorWorkflow": "Je3JpNLKg1mMNqVJ"
+  }
+}
