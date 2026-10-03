@@ -2,7 +2,7 @@
   "name": "SmartLar | Novo pedido → WhatsApp",
   "nodes": [
     {
-      "id": "68b07a0d-5c64-5fa9-8e90-1a70ec09fc20",
+      "id": "f2628309-779e-54dd-bfff-c66277ea56e5",
       "name": "Sobre este workflow",
       "type": "n8n-nodes-base.stickyNote",
       "typeVersion": 1,
@@ -18,7 +18,7 @@
       }
     },
     {
-      "id": "56aa2f23-5c23-5faa-ae48-cb90705a6f2b",
+      "id": "ab2acf16-9e56-59c3-8931-063eb102a80e",
       "name": "Etapa 1",
       "type": "n8n-nodes-base.stickyNote",
       "typeVersion": 1,
@@ -33,7 +33,7 @@
       }
     },
     {
-      "id": "dc13b048-b01a-516c-adcc-1d7089038ebe",
+      "id": "afa85b1c-6021-5499-9e5f-b0cbe8ce5e8f",
       "name": "Etapa 2",
       "type": "n8n-nodes-base.stickyNote",
       "typeVersion": 1,
@@ -48,7 +48,7 @@
       }
     },
     {
-      "id": "fb526daa-66c3-5535-aa8f-5dea748d5741",
+      "id": "0e0b4fe6-cad4-5d47-9436-bee9c25a510f",
       "name": "Etapa 3",
       "type": "n8n-nodes-base.stickyNote",
       "typeVersion": 1,
@@ -63,7 +63,7 @@
       }
     },
     {
-      "id": "ba242447-587f-5328-b4f0-f356be88609a",
+      "id": "755633a8-18e6-504f-8050-18ebd5d7d838",
       "name": "Pedido criado (Supabase)",
       "type": "n8n-nodes-base.webhook",
       "typeVersion": 2.1,
@@ -86,7 +86,7 @@
       }
     },
     {
-      "id": "178f358e-6422-519a-a885-81f097681951",
+      "id": "6bd5b1aa-59c5-5151-8611-b288b5e80e04",
       "name": "É um orçamento novo?",
       "type": "n8n-nodes-base.filter",
       "typeVersion": 2.2,
@@ -104,7 +104,7 @@
           },
           "conditions": [
             {
-              "id": "73406eb6-f3ee-5f99-9b1c-e8c764da9cb4",
+              "id": "0a9e9941-52d9-519c-bc3b-171c7c5924dd",
               "leftValue": "={{ $json.body.type }}",
               "rightValue": "INSERT",
               "operator": {
@@ -113,7 +113,7 @@
               }
             },
             {
-              "id": "852f167b-f6a7-59bc-9359-77c2244d0519",
+              "id": "de94b090-bc99-519b-83aa-7b3403075534",
               "leftValue": "={{ $json.body.record.status }}",
               "rightValue": "orcamento",
               "operator": {
@@ -128,7 +128,7 @@
       }
     },
     {
-      "id": "37451146-830b-5cc9-8bf2-ed63b530d4e3",
+      "id": "98526b10-c9c7-5bb4-8725-dd24547330e7",
       "name": "Buscar pedido completo",
       "type": "n8n-nodes-base.supabase",
       "typeVersion": 1,
@@ -156,7 +156,7 @@
       }
     },
     {
-      "id": "c9ad0ad7-5021-5ee5-9a6c-d9bfb1a6c1b2",
+      "id": "7ccf101b-3aea-516e-9793-e913614d9922",
       "name": "Montar mensagem",
       "type": "n8n-nodes-base.set",
       "typeVersion": 3.4,
@@ -168,7 +168,7 @@
         "assignments": {
           "assignments": [
             {
-              "id": "91b1054c-19b2-5ee5-bcb4-67c6ef795c9a",
+              "id": "b7f5af16-7232-5aba-9cb4-3ab5a3a6e880",
               "name": "mensagem",
               "value": "=🆕 *Novo orçamento #{{ $json.numero }}*\n\n👤 {{ $json.cliente_nome }}\n📞 {{ $json.cliente_telefone.replace(/^55(\\d{2})(\\d{4,5})(\\d{4})$/, '($1) $2-$3') }}\n💰 {{ Number($json.valor_total).toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' }) }}\n📅 {{ DateTime.fromISO($json.created_at).setZone('America/Sao_Paulo').toFormat(\"dd/MM/yyyy 'às' HH:mm\") }}{{ $json.observacoes ? '\\n📝 ' + $json.observacoes : '' }}",
               "type": "string"
@@ -179,7 +179,7 @@
       }
     },
     {
-      "id": "6ffc3150-40b8-5398-8d80-202696c21aa1",
+      "id": "793362b8-15d3-5436-b177-93768b14af73",
       "name": "Enviar no WhatsApp",
       "type": "n8n-nodes-base.executeWorkflow",
       "typeVersion": 1.3,
@@ -214,6 +214,16 @@
             {
               "id": "telefone",
               "displayName": "telefone",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "canBeUsedToMatch": true,
+              "type": "string",
+              "removed": true
+            },
+            {
+              "id": "destinatario",
+              "displayName": "destinatario",
               "required": false,
               "defaultMatch": false,
               "display": true,

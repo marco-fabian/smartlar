@@ -5,7 +5,8 @@
 | `SmartLar \| Novo pedido → WhatsApp` | Webhook ← trigger `pedidos_notificar_novo` | Avisa o Rafael de cada orçamento novo (cliente, valor, data) |
 | `SmartLar \| Instalações de amanhã → WhatsApp` | Todo dia às 18h (America/Sao_Paulo) | Resumo das instalações do dia seguinte; avisa também quando não há nenhuma |
 | `SmartLar \| Pedido concluído → Faturamento (Sheets)` | Webhook ← trigger `pedidos_notificar_concluido` | Registra o faturamento na planilha *SmartLar · Faturamento* (bônus) |
-| `SmartLar \| [Sub] Enviar WhatsApp` | Chamado pelos outros | Único ponto de contato com a Evolution API |
+| `SmartLar \| Status do pedido → WhatsApp do cliente` | Webhook ← trigger `pedidos_notificar_status` | Avisa o cliente a cada etapa: aprovado, agendado, em andamento, concluído (além do escopo) |
+| `SmartLar \| [Sub] Enviar WhatsApp` | Chamado pelos outros | Único ponto de contato com a Evolution API, com modo demonstração |
 | `SmartLar \| [Erro] Alerta de falha` | Error Trigger | Avisa no WhatsApp quando qualquer automação falha |
 
 ## Como o Supabase chama o n8n
@@ -36,6 +37,11 @@ Variáveis de ambiente do deploy:
 |---|---|
 | `N8N_API_URL`, `N8N_API_KEY` | API da instância do n8n |
 | `SMARTLAR_WHATSAPP_DESTINO` | Número ou grupo (`...@g.us`) que recebe as notificações (fica fora do repositório público) |
+| `SMARTLAR_WHATSAPP_LIBERADOS` | Números que recebem de verdade mesmo em modo demonstração, separados por vírgula (opcional) |
+
+## Modo demonstração
+
+Os telefones dos dados de exemplo são fictícios, mas são números que existem. Com `modo_demonstracao` ligado no sub-workflow, toda mensagem para cliente ou técnico vai para o grupo do Rafael com o aviso *[Para Fulano]*. Só os números em `SMARTLAR_WHATSAPP_LIBERADOS` recebem de verdade.
 
 ## Convenções
 

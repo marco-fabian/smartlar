@@ -15,22 +15,18 @@ TZ = 'America/Sao_Paulo'
 VERSAO = 'v1.0 · 02/10/2026'
 PLANILHA_ID = '1dP6mTmua0hU049ypz6i9Y7rUfY50n-AD2LXrdldlxeo'
 DESTINO_PADRAO = 'DESTINO_WHATSAPP'  # substituído no deploy por SMARTLAR_WHATSAPP_DESTINO
+NUMEROS_LIBERADOS = 'NUMEROS_LIBERADOS'  # substituído no deploy por SMARTLAR_WHATSAPP_LIBERADOS
 
 
 # ------------------------------------------------------------------ helpers
 
-_contador = 0
-
-
-def _id():
-    # IDs determinísticos: gerar de novo não muda o JSON se o workflow não mudou
-    global _contador
-    _contador += 1
-    return str(uuid.uuid5(uuid.NAMESPACE_URL, f'smartlar/{_contador}'))
+def _id(*partes):
+    # IDs derivados do conteúdo: gerar de novo não muda o JSON se o nó não mudou
+    return str(uuid.uuid5(uuid.NAMESPACE_URL, 'smartlar/' + '/'.join(map(str, partes))))
 
 
 def node(nome, tipo, versao, pos, params, **extra):
-    n = {'id': _id(), 'name': nome, 'type': f'n8n-nodes-base.{tipo}', 'typeVersion': versao,
+    n = {'id': _id('no', nome), 'name': nome, 'type': f'n8n-nodes-base.{tipo}', 'typeVersion': versao,
          'position': pos, 'parameters': params}
     n.update(extra)
     return n
@@ -44,17 +40,19 @@ def nota(nome, conteudo, pos, largura, altura, cor=None):
 
 
 def campos(*itens, manter_outros=False):
+    # item: (nome, valor) ou (nome, valor, tipo)
     params = {'assignments': {'assignments': [
-        {'id': _id(), 'name': nome, 'value': valor, 'type': 'string'} for nome, valor in itens]}, 'options': {}}
+        {'id': _id('campo', i[0], i[1]), 'name': i[0], 'value': i[1], 'type': i[2] if len(i) > 2 else 'string'} for i in itens]},
+        'options': {}}
     if manter_outros:
         params['includeOtherFields'] = True
     return params
 
 
-def condicao(esquerda, operacao, direita=''):
-    c = {'id': _id(), 'leftValue': esquerda, 'rightValue': direita,
-         'operator': {'type': 'string', 'operation': operacao}}
-    if operacao in ('exists', 'notExists', 'empty', 'notEmpty'):
+def condicao(esquerda, operacao, direita='', tipo='string'):
+    c = {'id': _id('condicao', esquerda, operacao, direita), 'leftValue': esquerda, 'rightValue': direita,
+         'operator': {'type': tipo, 'operation': operacao}}
+    if operacao in ('exists', 'notExists', 'empty', 'notEmpty', 'true', 'false'):
         c['operator']['singleValue'] = True
     return c
 
@@ -82,17 +80,21 @@ def buscar_pedido(nome, pos):
                 credentials={'supabaseApi': credencial('supabase')})
 
 
-def enviar_whatsapp(nome, pos):
-    colunas = ('mensagem', 'telefone')
+def enviar_whatsapp(nome, pos, para_cliente=False):
+    # Sem telefone, a mensagem vai para o grupo do Rafael
+    colunas = ('mensagem', 'telefone', 'destinatario')
+    valores = {'mensagem': '={{ $json.mensagem }}'}
+    if para_cliente:
+        valores.update(telefone='={{ $json.telefone }}', destinatario='={{ $json.destinatario }}')
     return node(nome, 'executeWorkflow', 1.3, pos, {
         'workflowId': {'__rl': True, 'value': IDS['workflows'].get('sub', ''), 'mode': 'list',
                        'cachedResultName': 'SmartLar | [Sub] Enviar WhatsApp'},
         'workflowInputs': {
             'mappingMode': 'defineBelow',
-            'value': {'mensagem': '={{ $json.mensagem }}'},
+            'value': valores,
             'matchingColumns': [],
             'schema': [{'id': c, 'displayName': c, 'required': False, 'defaultMatch': False, 'display': True,
-                        'canBeUsedToMatch': True, 'type': 'string', 'removed': c != 'mensagem'} for c in colunas],
+                        'canBeUsedToMatch': True, 'type': 'string', 'removed': c not in valores} for c in colunas],
             'attemptToConvertTypes': False, 'convertFieldsToString': True},
         'options': {}})
 
@@ -130,31 +132,57 @@ workflows['sub'] = {
              '## 📲 Enviar WhatsApp\n'
              'Sub-workflow: **único ponto de contato com a Evolution API**. '
              'As outras automações do SmartLar chamam este.\n\n'
-             '**Entrada**\n- `mensagem` (obrigatório)\n- `telefone` (opcional, padrão: grupo de notificações do Rafael)\n\n'
-             '**Configuração:** URL, instância e destino padrão (número ou grupo) no nó *Config da Evolution*\n'
+             '**Entrada**\n- `mensagem` (obrigatório)\n'
+             '- `telefone` e `destinatario` (opcionais): mensagem para cliente ou técnico. '
+             'Sem telefone, vai para o grupo de notificações do Rafael\n\n'
+             '**Configuração:** URL, instância, destino padrão e modo demonstração no nó *Config da Evolution*\n'
              '**Credencial:** SmartLar · Evolution API\n'
              '**Falhas:** 3 tentativas com 3s de intervalo; depois o erro sobe para quem chamou\n\n'
              f'`#smartlar` `#whatsapp` · `{VERSAO}`',
-             [-60, -400], 700, 360, 6),
-        node('Quando chamado', 'executeWorkflowTrigger', 1.1, [0, 0],
-             {'workflowInputs': {'values': [{'name': 'mensagem'}, {'name': 'telefone'}]}}),
-        node('Config da Evolution', 'set', 3.4, [240, 0], campos(
+             [-60, -420], 1240, 340, 6),
+        nota('Modo demonstração',
+             '### 🛡️ Modo demonstração\n'
+             'Os telefones dos dados de exemplo são fictícios, mas existem de verdade. '
+             'Com `modo_demonstracao` ligado, mensagens para clientes e técnicos **caem no grupo do Rafael** '
+             'com o aviso *[Para Fulano]*.\n\n'
+             'Números em `numeros_liberados` recebem de verdade (ex: o seu, para demonstrar).',
+             [400, -60], 520, 440),
+        node('Quando chamado', 'executeWorkflowTrigger', 1.1, [0, 100],
+             {'workflowInputs': {'values': [{'name': 'mensagem'}, {'name': 'telefone'}, {'name': 'destinatario'}]}}),
+        node('Config da Evolution', 'set', 3.4, [220, 100], campos(
             ('evolution_url', 'https://n8n-evolution-api.dnfcju.easypanel.host'),
             ('instancia', 'smartlar'),
             ('destino_padrao', DESTINO_PADRAO),
+            ('modo_demonstracao', True, 'boolean'),
+            ('numeros_liberados', NUMEROS_LIBERADOS),
             manter_outros=True)),
-        node('Enviar mensagem (Evolution)', 'httpRequest', 4.2, [480, 0], {
+        node('Enviar direto ao destinatário?', 'if', 2.2, [460, 100], condicoes(condicao(
+            "={{ !!$json.telefone && (!$json.modo_demonstracao || "
+            "$json.numeros_liberados.split(',').map(n => n.trim()).includes($json.telefone)) }}",
+            'true', tipo='boolean'))),
+        node('Destino: destinatário', 'set', 3.4, [700, 0], campos(
+            ('numero', '={{ $json.telefone }}'),
+            ('texto', '={{ $json.mensagem }}'))),
+        node('Destino: grupo do Rafael', 'set', 3.4, [700, 220], campos(
+            ('numero', '={{ $json.destino_padrao }}'),
+            ('texto', "={{ $json.telefone ? '📨 *[Para ' + ($json.destinatario || $json.telefone) + ']*\\n\\n' + $json.mensagem : $json.mensagem }}"))),
+        node('Enviar mensagem (Evolution)', 'httpRequest', 4.2, [960, 100], {
             'method': 'POST',
-            'url': '={{ $json.evolution_url }}/message/sendText/{{ $json.instancia }}',
+            'url': "={{ $('Config da Evolution').first().json.evolution_url }}/message/sendText/"
+                   "{{ $('Config da Evolution').first().json.instancia }}",
             'authentication': 'genericCredentialType', 'genericAuthType': 'httpHeaderAuth',
             'sendBody': True, 'specifyBody': 'json',
-            'jsonBody': '={{ JSON.stringify({ number: $json.telefone || $json.destino_padrao, text: $json.mensagem }) }}',
+            'jsonBody': '={{ JSON.stringify({ number: $json.numero, text: $json.texto }) }}',
             'options': {}},
             credentials={'httpHeaderAuth': credencial('evolution')},
             retryOnFail=True, maxTries=3, waitBetweenTries=3000),
     ],
     'connections': ligar(('Quando chamado', 'Config da Evolution'),
-                         ('Config da Evolution', 'Enviar mensagem (Evolution)')),
+                         ('Config da Evolution', 'Enviar direto ao destinatário?'),
+                         ('Enviar direto ao destinatário?', 'Destino: destinatário', 0),
+                         ('Enviar direto ao destinatário?', 'Destino: grupo do Rafael', 1),
+                         ('Destino: destinatário', 'Enviar mensagem (Evolution)'),
+                         ('Destino: grupo do Rafael', 'Enviar mensagem (Evolution)')),
     'settings': {**configuracoes(alerta_de_erro=False), 'callerPolicy': 'workflowsFromSameOwner'},
 }
 
@@ -340,12 +368,95 @@ workflows['faturamento'] = {
     'settings': configuracoes(),
 }
 
+# ------------------------------------------------------------------ Extra: cliente acompanha o pedido
+
+PRIMEIRO_NOME = "$json.cliente_nome.split(' ')[0]"
+ASSINATURA = '\n\n_Equipe SmartLar_'
+
+
+def mensagem_cliente(nome, pos, texto):
+    return node(nome, 'set', 3.4, pos, campos(
+        ('telefone', '={{ $json.cliente_telefone }}'),
+        ('destinatario', '={{ $json.cliente_nome }}'),
+        ('mensagem', texto + ASSINATURA)))
+
+
+def etapa(status):
+    return {'conditions': {'options': {'caseSensitive': True, 'leftValue': '', 'typeValidation': 'strict', 'version': 2},
+                           'conditions': [condicao('={{ $json.status }}', 'equals', status)],
+                           'combinator': 'and'},
+            'renameOutput': True, 'outputKey': status}
+
+
+workflows['status_cliente'] = {
+    'name': 'SmartLar | Status do pedido → WhatsApp do cliente',
+    'nodes': [
+        nota('Sobre este workflow',
+             '## 📣 Status do pedido → WhatsApp do cliente\n'
+             '**Além do escopo.** Resolve a dor *"clientes ligam perguntando status"*: o cliente recebe uma mensagem '
+             'a cada etapa do pedido (aprovado, agendado, em andamento, concluído).\n\n'
+             '**Gatilho:** trigger `pedidos_notificar_status` (só nas etapas acima)\n'
+             '**Destino:** WhatsApp do cliente, via *[Sub] Enviar WhatsApp*. '
+             'Em **modo demonstração**, cai no grupo do Rafael com o aviso *[Para Fulano]*\n'
+             '**Falhas:** *[Erro] Alerta de falha*\n\n'
+             f'`#smartlar` `#supabase` `#whatsapp` `#cliente` · `{VERSAO}`',
+             [-60, -440], 1460, 320, 6),
+        nota('Etapa 1', '### 1. Recebe o evento e busca o pedido\n'
+                        'Busca na `vw_pedidos` para ter nome do cliente, técnico e data atualizados.',
+             [-60, -100], 740, 820),
+        nota('Etapa 2', '### 2. Uma mensagem por etapa', [700, -100], 480, 820),
+        nota('Etapa 3', '### 3. Envia', [1200, -100], 280, 820),
+        webhook('Status do pedido mudou (Supabase)', 'smartlar/status-pedido', [0, 280]),
+        node('É uma etapa avisada ao cliente?', 'filter', 2.2, [220, 280], condicoes(
+            condicao('={{ ["aprovado", "agendado", "em_andamento", "concluido"].includes($json.body.record.status) }}',
+                     'true', tipo='boolean'),
+            condicao('={{ $json.body.record.status }}', 'notEquals', '={{ $json.body.old_record.status }}'))),
+        buscar_pedido('Buscar pedido completo', [460, 280]),
+        node('Qual etapa?', 'switch', 3.2, [520 + 220, 280],
+             {'rules': {'values': [etapa(st) for st in ('aprovado', 'agendado', 'em_andamento', 'concluido')]},
+              'options': {}}),
+        mensagem_cliente('Mensagem: aprovado', [960, 40],
+            '=Olá, {{ ' + PRIMEIRO_NOME + ' }}! 👋\n\n'
+            'Seu pedido *#{{ $json.numero }}* foi *aprovado*. Obrigado pela confiança!\n\n'
+            '💰 {{ ' + VALOR + ' }}\n\n'
+            'Em breve entramos em contato para agendar a instalação.'),
+        mensagem_cliente('Mensagem: agendado', [960, 220],
+            '=Olá, {{ ' + PRIMEIRO_NOME + ' }}! 📅\n\n'
+            'Sua instalação está *agendada*:\n\n'
+            "🗓️ {{ " + HORA_SP.format('$json.data_instalacao') + ".setLocale('pt-BR').toFormat(\"cccc, dd/MM 'às' HH:mm\") }}\n"
+            '🔧 Técnico: {{ $json.tecnico_nome }}\n'
+            '📍 {{ $json.cliente_endereco }}\n\n'
+            'Precisa remarcar? É só responder esta mensagem.'),
+        mensagem_cliente('Mensagem: em andamento', [960, 400],
+            '=Olá, {{ ' + PRIMEIRO_NOME + ' }}! 🔧\n\n'
+            'O técnico *{{ $json.tecnico_nome }}* começou a instalação do seu pedido *#{{ $json.numero }}*.'),
+        mensagem_cliente('Mensagem: concluído', [960, 580],
+            '=Olá, {{ ' + PRIMEIRO_NOME + ' }}! ✅\n\n'
+            'Sua instalação foi *concluída*. Obrigado por escolher a SmartLar!\n\n'
+            'Ficou alguma dúvida sobre os equipamentos? É só responder esta mensagem.'),
+        enviar_whatsapp('Enviar ao cliente no WhatsApp', [1260, 280], para_cliente=True),
+    ],
+    'connections': ligar(('Status do pedido mudou (Supabase)', 'É uma etapa avisada ao cliente?'),
+                         ('É uma etapa avisada ao cliente?', 'Buscar pedido completo'),
+                         ('Buscar pedido completo', 'Qual etapa?'),
+                         ('Qual etapa?', 'Mensagem: aprovado', 0),
+                         ('Qual etapa?', 'Mensagem: agendado', 1),
+                         ('Qual etapa?', 'Mensagem: em andamento', 2),
+                         ('Qual etapa?', 'Mensagem: concluído', 3),
+                         ('Mensagem: aprovado', 'Enviar ao cliente no WhatsApp'),
+                         ('Mensagem: agendado', 'Enviar ao cliente no WhatsApp'),
+                         ('Mensagem: em andamento', 'Enviar ao cliente no WhatsApp'),
+                         ('Mensagem: concluído', 'Enviar ao cliente no WhatsApp')),
+    'settings': configuracoes(),
+}
+
 ARQUIVOS = {
     'sub': 'sub-enviar-whatsapp',
     'erro': 'erro-alerta-de-falha',
     'novo_pedido': 'novo-pedido-whatsapp',
     'amanha': 'instalacoes-de-amanha-whatsapp',
     'faturamento': 'pedido-concluido-faturamento',
+    'status_cliente': 'status-pedido-cliente-whatsapp',
 }
 
 if __name__ == '__main__':

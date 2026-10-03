@@ -1,0 +1,592 @@
+{
+  "name": "SmartLar | Status do pedido → WhatsApp do cliente",
+  "nodes": [
+    {
+      "id": "f2628309-779e-54dd-bfff-c66277ea56e5",
+      "name": "Sobre este workflow",
+      "type": "n8n-nodes-base.stickyNote",
+      "typeVersion": 1,
+      "position": [
+        -60,
+        -440
+      ],
+      "parameters": {
+        "content": "## 📣 Status do pedido → WhatsApp do cliente\n**Além do escopo.** Resolve a dor *\"clientes ligam perguntando status\"*: o cliente recebe uma mensagem a cada etapa do pedido (aprovado, agendado, em andamento, concluído).\n\n**Gatilho:** trigger `pedidos_notificar_status` (só nas etapas acima)\n**Destino:** WhatsApp do cliente, via *[Sub] Enviar WhatsApp*. Em **modo demonstração**, cai no grupo do Rafael com o aviso *[Para Fulano]*\n**Falhas:** *[Erro] Alerta de falha*\n\n`#smartlar` `#supabase` `#whatsapp` `#cliente` · `v1.0 · 02/10/2026`",
+        "width": 1460,
+        "height": 320,
+        "color": 6
+      }
+    },
+    {
+      "id": "ab2acf16-9e56-59c3-8931-063eb102a80e",
+      "name": "Etapa 1",
+      "type": "n8n-nodes-base.stickyNote",
+      "typeVersion": 1,
+      "position": [
+        -60,
+        -100
+      ],
+      "parameters": {
+        "content": "### 1. Recebe o evento e busca o pedido\nBusca na `vw_pedidos` para ter nome do cliente, técnico e data atualizados.",
+        "width": 740,
+        "height": 820
+      }
+    },
+    {
+      "id": "afa85b1c-6021-5499-9e5f-b0cbe8ce5e8f",
+      "name": "Etapa 2",
+      "type": "n8n-nodes-base.stickyNote",
+      "typeVersion": 1,
+      "position": [
+        700,
+        -100
+      ],
+      "parameters": {
+        "content": "### 2. Uma mensagem por etapa",
+        "width": 480,
+        "height": 820
+      }
+    },
+    {
+      "id": "0e0b4fe6-cad4-5d47-9436-bee9c25a510f",
+      "name": "Etapa 3",
+      "type": "n8n-nodes-base.stickyNote",
+      "typeVersion": 1,
+      "position": [
+        1200,
+        -100
+      ],
+      "parameters": {
+        "content": "### 3. Envia",
+        "width": 280,
+        "height": 820
+      }
+    },
+    {
+      "id": "73f78bab-1714-50dc-9b91-14f468b7ae43",
+      "name": "Status do pedido mudou (Supabase)",
+      "type": "n8n-nodes-base.webhook",
+      "typeVersion": 2.1,
+      "position": [
+        0,
+        280
+      ],
+      "parameters": {
+        "httpMethod": "POST",
+        "path": "smartlar/status-pedido",
+        "authentication": "headerAuth",
+        "options": {}
+      },
+      "webhookId": "36aab292-639d-514f-b3e8-df328f24f770",
+      "credentials": {
+        "httpHeaderAuth": {
+          "id": "v5A6YGyJ9Sjq0pGi",
+          "name": "SmartLar · Webhook Supabase"
+        }
+      }
+    },
+    {
+      "id": "9487fc24-1fbb-53b6-a857-84dbdd104d08",
+      "name": "É uma etapa avisada ao cliente?",
+      "type": "n8n-nodes-base.filter",
+      "typeVersion": 2.2,
+      "position": [
+        220,
+        280
+      ],
+      "parameters": {
+        "conditions": {
+          "options": {
+            "caseSensitive": true,
+            "leftValue": "",
+            "typeValidation": "strict",
+            "version": 2
+          },
+          "conditions": [
+            {
+              "id": "45029fbf-248c-5fcf-b639-9efabc1ae2d1",
+              "leftValue": "={{ [\"aprovado\", \"agendado\", \"em_andamento\", \"concluido\"].includes($json.body.record.status) }}",
+              "rightValue": "",
+              "operator": {
+                "type": "boolean",
+                "operation": "true",
+                "singleValue": true
+              }
+            },
+            {
+              "id": "d57acba9-e0e1-5717-8b54-1c7e5288002f",
+              "leftValue": "={{ $json.body.record.status }}",
+              "rightValue": "={{ $json.body.old_record.status }}",
+              "operator": {
+                "type": "string",
+                "operation": "notEquals"
+              }
+            }
+          ],
+          "combinator": "and"
+        },
+        "options": {}
+      }
+    },
+    {
+      "id": "98526b10-c9c7-5bb4-8725-dd24547330e7",
+      "name": "Buscar pedido completo",
+      "type": "n8n-nodes-base.supabase",
+      "typeVersion": 1,
+      "position": [
+        460,
+        280
+      ],
+      "parameters": {
+        "operation": "get",
+        "tableId": "vw_pedidos",
+        "filters": {
+          "conditions": [
+            {
+              "keyName": "id",
+              "keyValue": "={{ $json.body.record.id }}"
+            }
+          ]
+        }
+      },
+      "credentials": {
+        "supabaseApi": {
+          "id": "1wRzT0SfONkLnl2w",
+          "name": "SmartLar · Supabase (service role)"
+        }
+      }
+    },
+    {
+      "id": "0c77b824-c115-5ed2-bb49-fb8d68e6343a",
+      "name": "Qual etapa?",
+      "type": "n8n-nodes-base.switch",
+      "typeVersion": 3.2,
+      "position": [
+        740,
+        280
+      ],
+      "parameters": {
+        "rules": {
+          "values": [
+            {
+              "conditions": {
+                "options": {
+                  "caseSensitive": true,
+                  "leftValue": "",
+                  "typeValidation": "strict",
+                  "version": 2
+                },
+                "conditions": [
+                  {
+                    "id": "fa6f33b1-6e63-5a91-85ad-d821c1c20c1a",
+                    "leftValue": "={{ $json.status }}",
+                    "rightValue": "aprovado",
+                    "operator": {
+                      "type": "string",
+                      "operation": "equals"
+                    }
+                  }
+                ],
+                "combinator": "and"
+              },
+              "renameOutput": true,
+              "outputKey": "aprovado"
+            },
+            {
+              "conditions": {
+                "options": {
+                  "caseSensitive": true,
+                  "leftValue": "",
+                  "typeValidation": "strict",
+                  "version": 2
+                },
+                "conditions": [
+                  {
+                    "id": "617d9f6f-0ec0-5ef2-ab9a-4dfeab073e11",
+                    "leftValue": "={{ $json.status }}",
+                    "rightValue": "agendado",
+                    "operator": {
+                      "type": "string",
+                      "operation": "equals"
+                    }
+                  }
+                ],
+                "combinator": "and"
+              },
+              "renameOutput": true,
+              "outputKey": "agendado"
+            },
+            {
+              "conditions": {
+                "options": {
+                  "caseSensitive": true,
+                  "leftValue": "",
+                  "typeValidation": "strict",
+                  "version": 2
+                },
+                "conditions": [
+                  {
+                    "id": "5f5ed518-4f7e-510e-9e7f-52d017e86922",
+                    "leftValue": "={{ $json.status }}",
+                    "rightValue": "em_andamento",
+                    "operator": {
+                      "type": "string",
+                      "operation": "equals"
+                    }
+                  }
+                ],
+                "combinator": "and"
+              },
+              "renameOutput": true,
+              "outputKey": "em_andamento"
+            },
+            {
+              "conditions": {
+                "options": {
+                  "caseSensitive": true,
+                  "leftValue": "",
+                  "typeValidation": "strict",
+                  "version": 2
+                },
+                "conditions": [
+                  {
+                    "id": "99844067-0f92-518a-b7ee-66fba389f654",
+                    "leftValue": "={{ $json.status }}",
+                    "rightValue": "concluido",
+                    "operator": {
+                      "type": "string",
+                      "operation": "equals"
+                    }
+                  }
+                ],
+                "combinator": "and"
+              },
+              "renameOutput": true,
+              "outputKey": "concluido"
+            }
+          ]
+        },
+        "options": {}
+      }
+    },
+    {
+      "id": "70b3c066-32eb-526d-bc30-6a7cf14852f3",
+      "name": "Mensagem: aprovado",
+      "type": "n8n-nodes-base.set",
+      "typeVersion": 3.4,
+      "position": [
+        960,
+        40
+      ],
+      "parameters": {
+        "assignments": {
+          "assignments": [
+            {
+              "id": "acce0bdd-4cdf-5ca1-a688-ac0c4cbed62f",
+              "name": "telefone",
+              "value": "={{ $json.cliente_telefone }}",
+              "type": "string"
+            },
+            {
+              "id": "b8696dc8-5310-52d7-bedd-efe126addd6d",
+              "name": "destinatario",
+              "value": "={{ $json.cliente_nome }}",
+              "type": "string"
+            },
+            {
+              "id": "fea1831a-f4e9-50d2-b653-40434dfdf522",
+              "name": "mensagem",
+              "value": "=Olá, {{ $json.cliente_nome.split(' ')[0] }}! 👋\n\nSeu pedido *#{{ $json.numero }}* foi *aprovado*. Obrigado pela confiança!\n\n💰 {{ Number($json.valor_total).toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' }) }}\n\nEm breve entramos em contato para agendar a instalação.\n\n_Equipe SmartLar_",
+              "type": "string"
+            }
+          ]
+        },
+        "options": {}
+      }
+    },
+    {
+      "id": "d8085204-9c51-5e96-a5de-ae5ab03c28db",
+      "name": "Mensagem: agendado",
+      "type": "n8n-nodes-base.set",
+      "typeVersion": 3.4,
+      "position": [
+        960,
+        220
+      ],
+      "parameters": {
+        "assignments": {
+          "assignments": [
+            {
+              "id": "acce0bdd-4cdf-5ca1-a688-ac0c4cbed62f",
+              "name": "telefone",
+              "value": "={{ $json.cliente_telefone }}",
+              "type": "string"
+            },
+            {
+              "id": "b8696dc8-5310-52d7-bedd-efe126addd6d",
+              "name": "destinatario",
+              "value": "={{ $json.cliente_nome }}",
+              "type": "string"
+            },
+            {
+              "id": "54e1fc32-39cc-584b-b49f-7658eda566d3",
+              "name": "mensagem",
+              "value": "=Olá, {{ $json.cliente_nome.split(' ')[0] }}! 📅\n\nSua instalação está *agendada*:\n\n🗓️ {{ DateTime.fromISO($json.data_instalacao).setZone('America/Sao_Paulo').setLocale('pt-BR').toFormat(\"cccc, dd/MM 'às' HH:mm\") }}\n🔧 Técnico: {{ $json.tecnico_nome }}\n📍 {{ $json.cliente_endereco }}\n\nPrecisa remarcar? É só responder esta mensagem.\n\n_Equipe SmartLar_",
+              "type": "string"
+            }
+          ]
+        },
+        "options": {}
+      }
+    },
+    {
+      "id": "df5266f8-4b15-5da1-851e-35ac3d7a9631",
+      "name": "Mensagem: em andamento",
+      "type": "n8n-nodes-base.set",
+      "typeVersion": 3.4,
+      "position": [
+        960,
+        400
+      ],
+      "parameters": {
+        "assignments": {
+          "assignments": [
+            {
+              "id": "acce0bdd-4cdf-5ca1-a688-ac0c4cbed62f",
+              "name": "telefone",
+              "value": "={{ $json.cliente_telefone }}",
+              "type": "string"
+            },
+            {
+              "id": "b8696dc8-5310-52d7-bedd-efe126addd6d",
+              "name": "destinatario",
+              "value": "={{ $json.cliente_nome }}",
+              "type": "string"
+            },
+            {
+              "id": "62767a51-1b1c-503e-b8bf-66fc9c795e3e",
+              "name": "mensagem",
+              "value": "=Olá, {{ $json.cliente_nome.split(' ')[0] }}! 🔧\n\nO técnico *{{ $json.tecnico_nome }}* começou a instalação do seu pedido *#{{ $json.numero }}*.\n\n_Equipe SmartLar_",
+              "type": "string"
+            }
+          ]
+        },
+        "options": {}
+      }
+    },
+    {
+      "id": "f26541a5-1984-5583-9071-7a42324cece4",
+      "name": "Mensagem: concluído",
+      "type": "n8n-nodes-base.set",
+      "typeVersion": 3.4,
+      "position": [
+        960,
+        580
+      ],
+      "parameters": {
+        "assignments": {
+          "assignments": [
+            {
+              "id": "acce0bdd-4cdf-5ca1-a688-ac0c4cbed62f",
+              "name": "telefone",
+              "value": "={{ $json.cliente_telefone }}",
+              "type": "string"
+            },
+            {
+              "id": "b8696dc8-5310-52d7-bedd-efe126addd6d",
+              "name": "destinatario",
+              "value": "={{ $json.cliente_nome }}",
+              "type": "string"
+            },
+            {
+              "id": "b9f75271-01fd-560e-aa11-95d2c49844cc",
+              "name": "mensagem",
+              "value": "=Olá, {{ $json.cliente_nome.split(' ')[0] }}! ✅\n\nSua instalação foi *concluída*. Obrigado por escolher a SmartLar!\n\nFicou alguma dúvida sobre os equipamentos? É só responder esta mensagem.\n\n_Equipe SmartLar_",
+              "type": "string"
+            }
+          ]
+        },
+        "options": {}
+      }
+    },
+    {
+      "id": "0a0d0a1c-365c-5251-b193-d97caac3266d",
+      "name": "Enviar ao cliente no WhatsApp",
+      "type": "n8n-nodes-base.executeWorkflow",
+      "typeVersion": 1.3,
+      "position": [
+        1260,
+        280
+      ],
+      "parameters": {
+        "workflowId": {
+          "__rl": true,
+          "value": "Z6Z4It2WacDz1cu3",
+          "mode": "list",
+          "cachedResultName": "SmartLar | [Sub] Enviar WhatsApp"
+        },
+        "workflowInputs": {
+          "mappingMode": "defineBelow",
+          "value": {
+            "mensagem": "={{ $json.mensagem }}",
+            "telefone": "={{ $json.telefone }}",
+            "destinatario": "={{ $json.destinatario }}"
+          },
+          "matchingColumns": [],
+          "schema": [
+            {
+              "id": "mensagem",
+              "displayName": "mensagem",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "canBeUsedToMatch": true,
+              "type": "string",
+              "removed": false
+            },
+            {
+              "id": "telefone",
+              "displayName": "telefone",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "canBeUsedToMatch": true,
+              "type": "string",
+              "removed": false
+            },
+            {
+              "id": "destinatario",
+              "displayName": "destinatario",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "canBeUsedToMatch": true,
+              "type": "string",
+              "removed": false
+            }
+          ],
+          "attemptToConvertTypes": false,
+          "convertFieldsToString": true
+        },
+        "options": {}
+      }
+    }
+  ],
+  "connections": {
+    "Status do pedido mudou (Supabase)": {
+      "main": [
+        [
+          {
+            "node": "É uma etapa avisada ao cliente?",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "É uma etapa avisada ao cliente?": {
+      "main": [
+        [
+          {
+            "node": "Buscar pedido completo",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Buscar pedido completo": {
+      "main": [
+        [
+          {
+            "node": "Qual etapa?",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Qual etapa?": {
+      "main": [
+        [
+          {
+            "node": "Mensagem: aprovado",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Mensagem: agendado",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Mensagem: em andamento",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Mensagem: concluído",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Mensagem: aprovado": {
+      "main": [
+        [
+          {
+            "node": "Enviar ao cliente no WhatsApp",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Mensagem: agendado": {
+      "main": [
+        [
+          {
+            "node": "Enviar ao cliente no WhatsApp",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Mensagem: em andamento": {
+      "main": [
+        [
+          {
+            "node": "Enviar ao cliente no WhatsApp",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Mensagem: concluído": {
+      "main": [
+        [
+          {
+            "node": "Enviar ao cliente no WhatsApp",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "settings": {
+    "executionOrder": "v1",
+    "timezone": "America/Sao_Paulo",
+    "saveManualExecutions": true,
+    "errorWorkflow": "Je3JpNLKg1mMNqVJ"
+  }
+}

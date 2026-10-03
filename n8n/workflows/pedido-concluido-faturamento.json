@@ -2,7 +2,7 @@
   "name": "SmartLar | Pedido concluído → Faturamento (Sheets)",
   "nodes": [
     {
-      "id": "f05a43c6-6f82-5a2c-808c-a85ecf28c753",
+      "id": "f2628309-779e-54dd-bfff-c66277ea56e5",
       "name": "Sobre este workflow",
       "type": "n8n-nodes-base.stickyNote",
       "typeVersion": 1,
@@ -18,7 +18,7 @@
       }
     },
     {
-      "id": "dd4e9607-3016-5737-94c1-e22c720cd995",
+      "id": "0cde3d85-bfa9-5f5c-8ae4-0060f64c6f58",
       "name": "Pedido concluído (Supabase)",
       "type": "n8n-nodes-base.webhook",
       "typeVersion": 2.1,
@@ -41,7 +41,7 @@
       }
     },
     {
-      "id": "dd848bcf-2b5a-5d33-bb36-d69bf1106466",
+      "id": "c60e55f5-215d-5435-9d55-03704bb9034e",
       "name": "Mudou para concluído?",
       "type": "n8n-nodes-base.filter",
       "typeVersion": 2.2,
@@ -59,7 +59,7 @@
           },
           "conditions": [
             {
-              "id": "73f3c8af-a64b-59f7-b23a-eca6a0dd6101",
+              "id": "0901005a-914f-55f9-8c2d-161411674ea5",
               "leftValue": "={{ $json.body.record.status }}",
               "rightValue": "concluido",
               "operator": {
@@ -68,7 +68,7 @@
               }
             },
             {
-              "id": "83121269-6dfc-5909-949e-7f9e7fb3ff9f",
+              "id": "27c866c7-83bb-5078-bdd8-a7620d88fc97",
               "leftValue": "={{ $json.body.old_record.status }}",
               "rightValue": "concluido",
               "operator": {
@@ -83,7 +83,7 @@
       }
     },
     {
-      "id": "2cd0307f-3bf4-598c-bcc3-a2e7515592c2",
+      "id": "98526b10-c9c7-5bb4-8725-dd24547330e7",
       "name": "Buscar pedido completo",
       "type": "n8n-nodes-base.supabase",
       "typeVersion": 1,
@@ -111,7 +111,7 @@
       }
     },
     {
-      "id": "89039de0-1191-59c8-922d-cdc8a8e6eb33",
+      "id": "9ad741ce-2643-533f-8d1e-ce2e1b957f01",
       "name": "Registrar no Google Sheets",
       "type": "n8n-nodes-base.googleSheets",
       "typeVersion": 4.7,

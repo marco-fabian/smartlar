@@ -2,7 +2,7 @@
   "name": "SmartLar | Instalações de amanhã → WhatsApp",
   "nodes": [
     {
-      "id": "225b4b73-10ef-51a3-a8df-80906e1fb6d4",
+      "id": "f2628309-779e-54dd-bfff-c66277ea56e5",
       "name": "Sobre este workflow",
       "type": "n8n-nodes-base.stickyNote",
       "typeVersion": 1,
@@ -18,7 +18,7 @@
       }
     },
     {
-      "id": "a008c15d-7176-562b-a398-65beaec3ee82",
+      "id": "ab2acf16-9e56-59c3-8931-063eb102a80e",
       "name": "Etapa 1",
       "type": "n8n-nodes-base.stickyNote",
       "typeVersion": 1,
@@ -33,7 +33,7 @@
       }
     },
     {
-      "id": "a9416105-29ed-5478-acd4-44bd448bd728",
+      "id": "afa85b1c-6021-5499-9e5f-b0cbe8ce5e8f",
       "name": "Etapa 2",
       "type": "n8n-nodes-base.stickyNote",
       "typeVersion": 1,
@@ -48,7 +48,7 @@
       }
     },
     {
-      "id": "dcfaf43a-439e-5a7d-8009-e089a4537a15",
+      "id": "f273724d-9a12-503c-b79e-02dab1ce4592",
       "name": "Todo dia às 18h",
       "type": "n8n-nodes-base.scheduleTrigger",
       "typeVersion": 1.2,
@@ -68,7 +68,7 @@
       }
     },
     {
-      "id": "96a3622a-0811-5a10-b28f-91e79141c5ff",
+      "id": "498a2170-2973-5b6e-a60d-b95a208b17be",
       "name": "Definir período de amanhã",
       "type": "n8n-nodes-base.set",
       "typeVersion": 3.4,
@@ -80,19 +80,19 @@
         "assignments": {
           "assignments": [
             {
-              "id": "c4aa9f1e-8792-5623-bd3a-0393260af8ff",
+              "id": "2a970c9d-107d-51ab-89b0-965da9d8d6dc",
               "name": "inicio",
               "value": "={{ $now.setZone('America/Sao_Paulo').plus({ days: 1 }).startOf('day').toUTC().toISO() }}",
               "type": "string"
             },
             {
-              "id": "8453b7ea-0d82-56ba-aa5f-aa801917a4a2",
+              "id": "d39b307b-9f78-5097-b31f-141271534d98",
               "name": "fim",
               "value": "={{ $now.setZone('America/Sao_Paulo').plus({ days: 2 }).startOf('day').toUTC().toISO() }}",
               "type": "string"
             },
             {
-              "id": "882ea2cc-7f9b-5082-aa09-c9bc826f8ad1",
+              "id": "acfa289d-4729-5292-8912-816ebd477b1b",
               "name": "data_label",
               "value": "={{ $now.setZone('America/Sao_Paulo').plus({ days: 1 }).startOf('day').setLocale('pt-BR').toFormat('cccc, dd/MM') }}",
               "type": "string"
@@ -103,7 +103,7 @@
       }
     },
     {
-      "id": "b1a15e87-4ded-5c31-b4ee-dfb595c673aa",
+      "id": "5675b30e-63ef-5f07-91a4-ad5390602ccd",
       "name": "Buscar instalações de amanhã",
       "type": "n8n-nodes-base.supabase",
       "typeVersion": 1,
@@ -146,7 +146,7 @@
       "alwaysOutputData": true
     },
     {
-      "id": "347192e0-9617-5f3a-ae1d-f2b1fe37c41e",
+      "id": "6b81b338-c43f-53a1-9e73-7886b84db4ef",
       "name": "Tem instalação amanhã?",
       "type": "n8n-nodes-base.if",
       "typeVersion": 2.2,
@@ -164,7 +164,7 @@
           },
           "conditions": [
             {
-              "id": "a9321848-f9f7-5551-b531-618adb7ef879",
+              "id": "bd6f5d04-ee63-518e-aa9d-1c4371430232",
               "leftValue": "={{ $json.id }}",
               "rightValue": "",
               "operator": {
@@ -180,7 +180,7 @@
       }
     },
     {
-      "id": "3565740c-5dd0-5182-b396-531a8a8ebab4",
+      "id": "6ca13285-faf3-5a50-9a60-218ceab396ad",
       "name": "Ordenar por horário",
       "type": "n8n-nodes-base.sort",
       "typeVersion": 1,
@@ -200,7 +200,7 @@
       }
     },
     {
-      "id": "b3688ec8-28c7-5c34-b1dd-c69f564921f7",
+      "id": "6c1ddc6e-5a48-5773-aef0-be7d9c13eded",
       "name": "Agrupar em uma lista",
       "type": "n8n-nodes-base.aggregate",
       "typeVersion": 1,
@@ -215,7 +215,7 @@
       }
     },
     {
-      "id": "91ef12a4-227d-57da-bf9d-3217da171d1f",
+      "id": "2cbf928f-16fc-50e1-9558-dcbe1f8b681c",
       "name": "Montar resumo do dia",
       "type": "n8n-nodes-base.set",
       "typeVersion": 3.4,
@@ -227,7 +227,7 @@
         "assignments": {
           "assignments": [
             {
-              "id": "cf34eb45-5cf5-5567-a9d1-24f9da33dd91",
+              "id": "273052da-35c2-5fff-b142-aa533f5b7cce",
               "name": "mensagem",
               "value": "=📋 *Instalações de amanhã ({{ $('Definir período de amanhã').first().json.data_label }})*\n\n{{ $json.instalacoes.map(i => '🕐 *' + DateTime.fromISO(i.data_instalacao).setZone('America/Sao_Paulo').toFormat('HH:mm') + '* · ' + i.tecnico_nome + '\\n👤 ' + i.cliente_nome + '\\n📍 ' + i.cliente_endereco).join('\\n\\n') }}\n\nTotal: {{ $json.instalacoes.length }} {{ $json.instalacoes.length === 1 ? 'instalação' : 'instalações' }}",
               "type": "string"
@@ -238,7 +238,7 @@
       }
     },
     {
-      "id": "ce94e220-a6c6-5edb-ae55-aac394d1e4df",
+      "id": "4f677007-665b-54fc-9a1b-1bffbfea959a",
       "name": "Montar aviso sem instalações",
       "type": "n8n-nodes-base.set",
       "typeVersion": 3.4,
@@ -250,7 +250,7 @@
         "assignments": {
           "assignments": [
             {
-              "id": "2fb1e75d-49b4-5f7b-90e3-db00400866b0",
+              "id": "2d490980-4c27-59f7-ac59-911d64f1efff",
               "name": "mensagem",
               "value": "=📋 *Instalações de amanhã ({{ $('Definir período de amanhã').first().json.data_label }})*\n\nNenhuma instalação agendada. ✅",
               "type": "string"
@@ -261,7 +261,7 @@
       }
     },
     {
-      "id": "8fb6efba-ada6-5a79-b0cc-4e85fdb9fd35",
+      "id": "8f7f30ac-9ce1-5873-83d2-ce24581cd9ad",
       "name": "Enviar resumo no WhatsApp",
       "type": "n8n-nodes-base.executeWorkflow",
       "typeVersion": 1.3,
@@ -296,6 +296,16 @@
             {
               "id": "telefone",
               "displayName": "telefone",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "canBeUsedToMatch": true,
+              "type": "string",
+              "removed": true
+            },
+            {
+              "id": "destinatario",
+              "displayName": "destinatario",
               "required": false,
               "defaultMatch": false,
               "display": true,

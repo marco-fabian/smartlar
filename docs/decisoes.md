@@ -93,6 +93,14 @@ Datas com Luxon nas expressões, filtros no nó do Supabase, IF para o caso "sem
 ### Workflows versionados no repositório
 `n8n/build.py` gera os JSON em `n8n/workflows/` e `n8n/deploy.py` publica pela API do n8n. O JSON no git é a fonte da verdade; o histórico de versões do n8n fica como segunda camada.
 
+## Além do escopo
+
+### Cliente acompanha o pedido pelo WhatsApp
+Uma das dores do enunciado é "clientes ligam perguntando status", e nenhuma entrega obrigatória toca no cliente final. Um trigger em `pedidos` (`pedidos_notificar_status`) chama um workflow que manda ao cliente uma mensagem por etapa: aprovado, agendado (data, hora, técnico e endereço), em andamento e concluído. Reaproveita o gatilho via `pg_net`, a view `vw_pedidos` e o sub-workflow de WhatsApp: a mudança foi só a mensagem e o destino.
+
+### Modo demonstração
+Os telefones do seed são fictícios, mas o formato é real e poderiam existir. O sub-workflow tem um modo demonstração (ligado): mensagens para clientes e técnicos vão para o grupo do Rafael com o aviso *[Para Fulano]*. Uma lista de números liberados (fora do repositório) recebe de verdade, para a demonstração ao vivo.
+
 ## Interpretações do enunciado
 - **Cancelamento**: a tabela do enunciado lista `... → concluido → cancelado`, mas as regras dizem que só `orcamento` e `aprovado` podem ser cancelados. Segui as regras. Se um pedido `agendado` puder ser cancelado, é uma linha a mais em `status_transicoes`.
 - **"Total de pedidos do mês"**: pedidos criados no mês atual, em qualquer status.

@@ -2,7 +2,7 @@
   "name": "SmartLar | [Erro] Alerta de falha",
   "nodes": [
     {
-      "id": "38298395-b141-594a-885d-a65ea1d0cdfe",
+      "id": "f2628309-779e-54dd-bfff-c66277ea56e5",
       "name": "Sobre este workflow",
       "type": "n8n-nodes-base.stickyNote",
       "typeVersion": 1,
@@ -18,7 +18,7 @@
       }
     },
     {
-      "id": "c3fc2744-191c-5891-86b9-e2fe50f9e102",
+      "id": "cd911bcf-cba3-5493-85c0-b263f6cc056b",
       "name": "Quando um workflow falhar",
       "type": "n8n-nodes-base.errorTrigger",
       "typeVersion": 1,
@@ -29,7 +29,7 @@
       "parameters": {}
     },
     {
-      "id": "3ff2b81e-55af-5b43-a10d-93693519d559",
+      "id": "4ba6e352-54d2-5b58-bff2-df5cafc788e9",
       "name": "Montar alerta",
       "type": "n8n-nodes-base.set",
       "typeVersion": 3.4,
@@ -41,7 +41,7 @@
         "assignments": {
           "assignments": [
             {
-              "id": "d8626b19-275a-5928-9173-921570c5a28f",
+              "id": "38f4fe09-2caa-5e99-b093-ab083444cc7f",
               "name": "mensagem",
               "value": "=⚠️ *SmartLar · falha em automação*\n\n*Workflow:* {{ $json.workflow.name }}\n*Nó:* {{ $json.execution.lastNodeExecuted }}\n*Erro:* {{ $json.execution.error.message }}\n*Quando:* {{ $now.setZone('America/Sao_Paulo').toFormat('dd/MM HH:mm') }}\n\n🔗 {{ $json.execution.url }}",
               "type": "string"
@@ -52,7 +52,7 @@
       }
     },
     {
-      "id": "0eb8b28c-a83a-5ab0-b525-ef19511154ef",
+      "id": "baa9c0bf-f120-52f8-bbc4-09522af30ed9",
       "name": "Enviar alerta no WhatsApp",
       "type": "n8n-nodes-base.executeWorkflow",
       "typeVersion": 1.3,
@@ -87,6 +87,16 @@
             {
               "id": "telefone",
               "displayName": "telefone",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "canBeUsedToMatch": true,
+              "type": "string",
+              "removed": true
+            },
+            {
+              "id": "destinatario",
+              "displayName": "destinatario",
               "required": false,
               "defaultMatch": false,
               "display": true,
