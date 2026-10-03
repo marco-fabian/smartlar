@@ -291,6 +291,7 @@ export type Database = {
           data_instalacao: string | null
           forma_pagamento: Database["public"]["Enums"]["forma_pagamento"] | null
           id: string | null
+          itens_resumo: string | null
           numero: number | null
           observacoes: string | null
           status: Database["public"]["Enums"]["pedido_status"] | null
