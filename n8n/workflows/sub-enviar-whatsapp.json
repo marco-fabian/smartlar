@@ -11,15 +11,15 @@
         -420
       ],
       "parameters": {
-        "content": "## 📲 Enviar WhatsApp\nSub-workflow: **único ponto de contato com a Evolution API**. As outras automações do SmartLar chamam este.\n\n**Entrada**\n- `mensagem` (obrigatório)\n- `telefone` e `destinatario` (opcionais): mensagem para cliente ou técnico. Sem telefone, vai para o grupo de notificações do Rafael\n\n**Configuração:** URL, instância, destino padrão e modo demonstração no nó *Config da Evolution*\n**Credencial:** SmartLar · Evolution API\n**Falhas:** 3 tentativas com 3s de intervalo; depois o erro sobe para quem chamou\n\n`#smartlar` `#whatsapp` · `v1.0 · 02/10/2026`",
+        "content": "## 📲 Enviar WhatsApp\nSub-workflow: **único ponto de contato com a Evolution API**. As outras automações do SmartLar chamam este.\n\n**Entrada**\n- `mensagem` (obrigatório)\n- `telefone`, `destinatario` e `whatsapp_autorizado` (opcionais): mensagem para cliente ou técnico. Sem telefone, vai para o grupo de notificações do Rafael\n\n**Configuração:** URL, instância e destino padrão no nó *Config da Evolution*\n**Credencial:** SmartLar · Evolution API\n**Falhas:** 3 tentativas com 3s de intervalo; depois o erro sobe para quem chamou\n\n`#smartlar` `#whatsapp` · `v1.0 · 02/10/2026`",
         "width": 1240,
         "height": 340,
         "color": 6
       }
     },
     {
-      "id": "92c2d1cf-8070-5b00-9b14-1f552d5594d7",
-      "name": "Modo demonstração",
+      "id": "5759119f-6aa6-5e8d-bd05-15a658ec0c35",
+      "name": "Consentimento",
       "type": "n8n-nodes-base.stickyNote",
       "typeVersion": 1,
       "position": [
@@ -27,7 +27,7 @@
         -60
       ],
       "parameters": {
-        "content": "### 🛡️ Modo demonstração\nOs telefones dos dados de exemplo são fictícios, mas existem de verdade. Com `modo_demonstracao` ligado, mensagens para clientes e técnicos **caem no grupo do Rafael** com o aviso *[Para Fulano]*.\n\nNúmeros em `numeros_liberados` recebem de verdade (ex: o seu, para demonstrar).",
+        "content": "### 🛡️ Consentimento (opt-in)\nSó recebe mensagem direta quem **autorizou**: o cliente com *Avisar pelo WhatsApp* marcado no cadastro.\n\nSem autorização (os telefones fictícios dos dados de exemplo, os técnicos), a mensagem **vai para o grupo do Rafael** com o aviso *[Para Fulano]*, e nunca para o número.",
         "width": 520,
         "height": 440
       }
@@ -52,6 +52,9 @@
             },
             {
               "name": "destinatario"
+            },
+            {
+              "name": "whatsapp_autorizado"
             }
           ]
         }
@@ -86,18 +89,6 @@
               "name": "destino_padrao",
               "value": "DESTINO_WHATSAPP",
               "type": "string"
-            },
-            {
-              "id": "6d29fa1f-14fe-5d38-adeb-a4af657d45a5",
-              "name": "modo_demonstracao",
-              "value": true,
-              "type": "boolean"
-            },
-            {
-              "id": "8a9fed40-e5fe-5deb-93d7-f716f88338df",
-              "name": "numeros_liberados",
-              "value": "NUMEROS_LIBERADOS",
-              "type": "string"
             }
           ]
         },
@@ -106,8 +97,8 @@
       }
     },
     {
-      "id": "b3b56200-1732-5ec9-9c26-429dd2afec10",
-      "name": "Enviar direto ao destinatário?",
+      "id": "7594bc41-dd42-5b8e-94c1-bc17b50a6c70",
+      "name": "Destinatário autorizou?",
       "type": "n8n-nodes-base.if",
       "typeVersion": 2.2,
       "position": [
@@ -124,8 +115,8 @@
           },
           "conditions": [
             {
-              "id": "11e6631f-6b8c-5818-a3f8-8a59fc07f21d",
-              "leftValue": "={{ !!$json.telefone && (!$json.modo_demonstracao || $json.numeros_liberados.split(',').map(n => n.trim()).includes($json.telefone)) }}",
+              "id": "58a26263-c65b-5817-a3d4-bf165ecef0c7",
+              "leftValue": "={{ !!$json.telefone && String($json.whatsapp_autorizado) === 'true' }}",
               "rightValue": "",
               "operator": {
                 "type": "boolean",
@@ -243,14 +234,14 @@
       "main": [
         [
           {
-            "node": "Enviar direto ao destinatário?",
+            "node": "Destinatário autorizou?",
             "type": "main",
             "index": 0
           }
         ]
       ]
     },
-    "Enviar direto ao destinatário?": {
+    "Destinatário autorizou?": {
       "main": [
         [
           {

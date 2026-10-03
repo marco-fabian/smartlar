@@ -23,7 +23,7 @@ O Rafael, dono da SmartLar, tinha cinco dores. Cada uma tem uma resposta no sist
 | Não sabe quais instalações estão pendentes na semana | Próximas instalações no dashboard e **resumo do dia seguinte às 18h** no WhatsApp | Dashboard · n8n |
 | Não sabe quanto faturou e quanto tem a receber | Indicadores do mês no dashboard e **planilha de faturamento** preenchida sozinha a cada pedido concluído | Dashboard · Google Sheets |
 | Os técnicos não sabem a agenda sem ligar pra ele | Tela de agenda por técnico e **cada técnico recebe a própria agenda** no WhatsApp, com endereço, link do Maps e o que instalar | Agenda · n8n |
-| Clientes ligam perguntando o status | **O cliente recebe uma mensagem a cada etapa**: aprovado, agendado (data, hora e técnico), em andamento e concluído | n8n |
+| Clientes ligam perguntando o status | **O cliente recebe uma mensagem a cada etapa**: aprovado, agendado (data, hora e técnico), em andamento e concluído, se autorizou no cadastro | Clientes, n8n |
 
 ---
 
@@ -78,7 +78,7 @@ O banco **bloqueia** qualquer transição fora desse fluxo (ex: `orcamento → c
 | 📊 **Dashboard** | Pedidos do mês, faturado, a receber, aguardando agendamento · próximas instalações (7 dias) · orçamentos aguardando aprovação |
 | ➕ **Novo pedido** | Busca ou cadastra o cliente na hora · adiciona produtos com subtotal e total ao vivo · observações · salva como orçamento |
 | 📋 **Pedidos** | Filtro por status e busca · detalhe com itens, valores e histórico · botões do fluxo (aprovar, agendar, iniciar, concluir, cancelar) |
-| 👥 **Clientes** | Cadastro com validação · busca por nome ou telefone · histórico de pedidos de cada cliente |
+| 👥 **Clientes** | Cadastro com validação · autorização para avisos no WhatsApp · busca por nome ou telefone · histórico de pedidos de cada cliente |
 | 📦 **Produtos** | Catálogo por categoria · cadastro e edição de preço (pedidos antigos mantêm o preço da época) |
 | 🔧 **Agenda dos técnicos** | Instalações por técnico e por dia · iniciar e concluir direto da tela · links para Maps e WhatsApp do cliente |
 
@@ -91,7 +91,7 @@ Pensado para funcionar no celular: o técnico usa a agenda em campo.
 | Quando | O que acontece | Quem recebe |
 |---|---|---|
 | 🆕 Orçamento criado | Aviso com cliente, valor e data | Rafael |
-| 📣 Pedido muda de etapa | Mensagem da etapa (aprovado, agendado, em andamento, concluído) | Cliente |
+| 📣 Pedido muda de etapa | Mensagem da etapa (aprovado, agendado, em andamento, concluído) | Cliente que autorizou |
 | 💰 Pedido concluído | Linha na planilha de faturamento (sem duplicar) | Google Sheets |
 | ⏰ Todo dia às 9h | Orçamentos parados há 3+ dias, com link de follow-up | Rafael |
 | 📋 Todo dia às 18h | Resumo das instalações de amanhã | Rafael |
@@ -116,7 +116,7 @@ Equipe SmartLar
 
 Os workflows não têm nó de código, cada um tem notas explicando as etapas, e os JSON ficam versionados em [`n8n/workflows`](n8n/workflows). Detalhes em [n8n/README.md](n8n/README.md).
 
-> 🛡️ **Modo demonstração:** os telefones dos dados de exemplo são fictícios. Mensagens para clientes e técnicos vão para o grupo do Rafael com o aviso *[Para Fulano]*, e só números liberados recebem de verdade.
+> 🛡️ **Consentimento:** o cliente só recebe WhatsApp se autorizou no cadastro (*Avisar pelo WhatsApp a cada etapa do pedido*). Sem autorização, como nos clientes fictícios dos dados de exemplo e nos técnicos, a mensagem vai para o grupo do Rafael com o aviso *[Para Fulano]*, nunca para o número.
 
 ---
 
@@ -135,6 +135,7 @@ erDiagram
         text nome
         text telefone UK "WhatsApp, só dígitos"
         text endereco "local da instalação"
+        boolean notificar_whatsapp "opt-in"
     }
     tecnicos {
         uuid id PK
@@ -222,9 +223,9 @@ Banco: aplique os arquivos de `supabase/migrations` em ordem e depois o `supabas
 
 ## 🧪 Roteiro de teste
 
-1. **Clientes → Novo cliente**: cadastre alguém (o telefone aceita qualquer formato).
+1. **Clientes → Novo cliente**: cadastre-se com o seu número e marque *Avisar pelo WhatsApp* para receber as mensagens de cada etapa (o telefone aceita qualquer formato).
 2. **Novo pedido**: escolha o cliente, adicione 2× *Câmera IP Wi-Fi* + 1× *Sensor de presença* e confira o total: **R$ 1.080,00**. Salve. 📲 *O Rafael é avisado.*
-3. **Pedidos → abrir o pedido**: *Aprovar* (pede a forma de pagamento) e *Agendar instalação* (pede técnico e data). 📲 *O cliente recebe cada etapa.*
+3. **Pedidos → abrir o pedido**: *Aprovar* (pede a forma de pagamento) e *Agendar instalação* (pede técnico, data e duração). 📲 *Cada etapa chega no seu WhatsApp.*
 4. **Agenda dos técnicos**: escolha o técnico, *Iniciar instalação* e *Concluir*. 📊 *O faturamento vai para a planilha.*
 5. **Dashboard**: o faturado do mês sobe com o valor do pedido.
 

@@ -60,8 +60,6 @@ def publicar(chave):
         if not os.environ.get('SMARTLAR_WHATSAPP_DESTINO'):
             sys.exit(f'{chave}: defina SMARTLAR_WHATSAPP_DESTINO (número ou grupo que recebe as notificações)')
         texto = texto.replace(build.DESTINO_PADRAO, os.environ['SMARTLAR_WHATSAPP_DESTINO'])
-    # Números que recebem de verdade mesmo em modo demonstração (separados por vírgula)
-    texto = texto.replace(build.NUMEROS_LIBERADOS, os.environ.get('SMARTLAR_WHATSAPP_LIBERADOS', ''))
     wf = json.loads(texto)
     corpo = {k: wf[k] for k in ('name', 'nodes', 'connections', 'settings')}
 

@@ -1,6 +1,6 @@
 import { useMemo, useState } from "react"
 import { useNavigate } from "react-router"
-import { PlusIcon, SearchIcon } from "lucide-react"
+import { MessageCircleIcon, PlusIcon, SearchIcon } from "lucide-react"
 import { ClienteForm } from "@/components/cliente-form"
 import { PageHeader } from "@/components/page-header"
 import { Button } from "@/components/ui/button"
@@ -76,7 +76,14 @@ export function ClientesPage() {
               ))}
             {filtrados.map((c) => (
               <TableRow key={c.id} className="cursor-pointer" onClick={() => navigate(`/clientes/${c.id}`)}>
-                <TableCell className="font-medium">{c.nome}</TableCell>
+                <TableCell className="font-medium">
+                  <span className="inline-flex items-center gap-1.5">
+                    {c.nome}
+                    {c.notificar_whatsapp && (
+                      <MessageCircleIcon className="size-3.5 text-emerald-600" aria-label="Recebe avisos pelo WhatsApp" />
+                    )}
+                  </span>
+                </TableCell>
                 <TableCell>{formatTelefone(c.telefone)}</TableCell>
                 <TableCell className="hidden md:table-cell">{c.email ?? "—"}</TableCell>
                 <TableCell className="hidden max-w-xs truncate lg:table-cell">{c.endereco}</TableCell>

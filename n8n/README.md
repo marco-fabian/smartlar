@@ -7,7 +7,7 @@
 | `SmartLar \| Pedido concluído → Faturamento (Sheets)` | Webhook ← trigger `pedidos_notificar_concluido` | Registra o faturamento na planilha *SmartLar · Faturamento* (bônus) |
 | `SmartLar \| Status do pedido → WhatsApp do cliente` | Webhook ← trigger `pedidos_notificar_status` | Avisa o cliente a cada etapa: aprovado, agendado, em andamento, concluído (além do escopo) |
 | `SmartLar \| Orçamentos parados → Lembrete` | Todo dia às 9h | Lista os orçamentos sem resposta há 3+ dias, com link de follow-up pronto para cada cliente (além do escopo) |
-| `SmartLar \| [Sub] Enviar WhatsApp` | Chamado pelos outros | Único ponto de contato com a Evolution API, com modo demonstração |
+| `SmartLar \| [Sub] Enviar WhatsApp` | Chamado pelos outros | Único ponto de contato com a Evolution API; decide o destino pelo consentimento |
 | `SmartLar \| [Erro] Alerta de falha` | Error Trigger | Avisa no WhatsApp quando qualquer automação falha |
 
 ## Como o Supabase chama o n8n
@@ -38,11 +38,10 @@ Variáveis de ambiente do deploy:
 |---|---|
 | `N8N_API_URL`, `N8N_API_KEY` | API da instância do n8n |
 | `SMARTLAR_WHATSAPP_DESTINO` | Número ou grupo (`...@g.us`) que recebe as notificações (fica fora do repositório público) |
-| `SMARTLAR_WHATSAPP_LIBERADOS` | Números que recebem de verdade mesmo em modo demonstração, separados por vírgula (opcional) |
 
-## Modo demonstração
+## Consentimento (opt-in)
 
-Os telefones dos dados de exemplo são fictícios, mas são números que existem. Com `modo_demonstracao` ligado no sub-workflow, toda mensagem para cliente ou técnico vai para o grupo do Rafael com o aviso *[Para Fulano]*. Só os números em `SMARTLAR_WHATSAPP_LIBERADOS` recebem de verdade.
+Mensagem direta só para quem autorizou: o cliente com *Avisar pelo WhatsApp* marcado no cadastro (`clientes.notificar_whatsapp`, repassado como `whatsapp_autorizado`). Sem autorização (os telefones fictícios dos dados de exemplo, os técnicos), a mensagem vai para o grupo do Rafael com o aviso *[Para Fulano]*, nunca para o número.
 
 ## Convenções
 

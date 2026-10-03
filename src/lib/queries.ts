@@ -141,6 +141,16 @@ export function useSalvarCliente() {
   })
 }
 
+export function useAutorizarWhatsapp() {
+  const invalidar = useInvalidar()
+  return useMutation({
+    mutationFn: async ({ id, autorizado }: { id: string; autorizado: boolean }) =>
+      check(await supabase.from("clientes").update({ notificar_whatsapp: autorizado }).eq("id", id).select().single()),
+    onSuccess: invalidar,
+    onError: (e) => toast.error(mensagemErro(e)),
+  })
+}
+
 export function useSalvarProduto() {
   const invalidar = useInvalidar()
   return useMutation({

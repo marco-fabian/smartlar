@@ -1,6 +1,7 @@
 import { useState, type FormEvent } from "react"
 import { toast } from "sonner"
 import { Button } from "@/components/ui/button"
+import { Checkbox } from "@/components/ui/checkbox"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
 import { Textarea } from "@/components/ui/textarea"
@@ -13,6 +14,7 @@ const VAZIO = { nome: "", telefone: "", email: "", endereco: "", observacoes: ""
 export function ClienteForm({ onSalvo }: { onSalvo: (cliente: Cliente) => void }) {
   const [form, setForm] = useState(VAZIO)
   const [erros, setErros] = useState<Partial<Record<keyof typeof VAZIO, string>>>({})
+  const [notificar, setNotificar] = useState(false)
   const salvar = useSalvarCliente()
 
   function campo(nome: keyof typeof VAZIO) {
@@ -41,9 +43,11 @@ export function ClienteForm({ onSalvo }: { onSalvo: (cliente: Cliente) => void }
         email: form.email.trim() || null,
         endereco: form.endereco.trim(),
         observacoes: form.observacoes.trim() || null,
+        notificar_whatsapp: notificar,
       })
       toast.success(`Cliente ${cliente.nome} cadastrado.`)
       setForm(VAZIO)
+      setNotificar(false)
       onSalvo(cliente)
     } catch (err) {
       toast.error(mensagemErro(err))
@@ -76,6 +80,15 @@ export function ClienteForm({ onSalvo }: { onSalvo: (cliente: Cliente) => void }
       <div className="grid gap-2">
         <Label htmlFor="cliente-observacoes">Observações</Label>
         <Textarea {...campo("observacoes")} rows={2} placeholder="Ex: avisar a portaria antes" />
+      </div>
+      <div className="flex items-start gap-3 rounded-lg border p-3">
+        <Checkbox id="cliente-notificar" checked={notificar} onCheckedChange={(v) => setNotificar(v === true)} />
+        <div className="grid gap-1">
+          <Label htmlFor="cliente-notificar">Avisar pelo WhatsApp a cada etapa do pedido</Label>
+          <p className="text-xs text-muted-foreground">
+            O cliente autoriza receber as atualizações (aprovado, agendado, em andamento, concluído) neste número.
+          </p>
+        </div>
       </div>
       <Button type="submit" disabled={salvar.isPending}>
         {salvar.isPending ? "Salvando..." : "Cadastrar cliente"}

@@ -327,6 +327,16 @@
               "canBeUsedToMatch": true,
               "type": "string",
               "removed": true
+            },
+            {
+              "id": "whatsapp_autorizado",
+              "displayName": "whatsapp_autorizado",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "canBeUsedToMatch": true,
+              "type": "string",
+              "removed": true
             }
           ],
           "attemptToConvertTypes": false,
@@ -454,7 +464,8 @@
           "value": {
             "mensagem": "={{ $json.mensagem }}",
             "telefone": "={{ $json.telefone }}",
-            "destinatario": "={{ $json.destinatario }}"
+            "destinatario": "={{ $json.destinatario }}",
+            "whatsapp_autorizado": "={{ String($json.whatsapp_autorizado ?? false) }}"
           },
           "matchingColumns": [],
           "schema": [
@@ -481,6 +492,16 @@
             {
               "id": "destinatario",
               "displayName": "destinatario",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "canBeUsedToMatch": true,
+              "type": "string",
+              "removed": false
+            },
+            {
+              "id": "whatsapp_autorizado",
+              "displayName": "whatsapp_autorizado",
               "required": false,
               "defaultMatch": false,
               "display": true,

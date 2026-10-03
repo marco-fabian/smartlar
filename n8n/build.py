@@ -15,7 +15,6 @@ TZ = 'America/Sao_Paulo'
 VERSAO = 'v1.0 · 02/10/2026'
 PLANILHA_ID = '1dP6mTmua0hU049ypz6i9Y7rUfY50n-AD2LXrdldlxeo'
 DESTINO_PADRAO = 'DESTINO_WHATSAPP'  # substituído no deploy por SMARTLAR_WHATSAPP_DESTINO
-NUMEROS_LIBERADOS = 'NUMEROS_LIBERADOS'  # substituído no deploy por SMARTLAR_WHATSAPP_LIBERADOS
 
 
 # ------------------------------------------------------------------ helpers
@@ -82,10 +81,11 @@ def buscar_pedido(nome, pos):
 
 def enviar_whatsapp(nome, pos, para_cliente=False):
     # Sem telefone, a mensagem vai para o grupo do Rafael
-    colunas = ('mensagem', 'telefone', 'destinatario')
+    colunas = ('mensagem', 'telefone', 'destinatario', 'whatsapp_autorizado')
     valores = {'mensagem': '={{ $json.mensagem }}'}
     if para_cliente:
-        valores.update(telefone='={{ $json.telefone }}', destinatario='={{ $json.destinatario }}')
+        valores.update(telefone='={{ $json.telefone }}', destinatario='={{ $json.destinatario }}',
+                       whatsapp_autorizado='={{ String($json.whatsapp_autorizado ?? false) }}')  # o sub-workflow recebe texto
     return node(nome, 'executeWorkflow', 1.3, pos, {
         'workflowId': {'__rl': True, 'value': IDS['workflows'].get('sub', ''), 'mode': 'list',
                        'cachedResultName': 'SmartLar | [Sub] Enviar WhatsApp'},
@@ -135,32 +135,29 @@ workflows['sub'] = {
              'Sub-workflow: **único ponto de contato com a Evolution API**. '
              'As outras automações do SmartLar chamam este.\n\n'
              '**Entrada**\n- `mensagem` (obrigatório)\n'
-             '- `telefone` e `destinatario` (opcionais): mensagem para cliente ou técnico. '
+             '- `telefone`, `destinatario` e `whatsapp_autorizado` (opcionais): mensagem para cliente ou técnico. '
              'Sem telefone, vai para o grupo de notificações do Rafael\n\n'
-             '**Configuração:** URL, instância, destino padrão e modo demonstração no nó *Config da Evolution*\n'
+             '**Configuração:** URL, instância e destino padrão no nó *Config da Evolution*\n'
              '**Credencial:** SmartLar · Evolution API\n'
              '**Falhas:** 3 tentativas com 3s de intervalo; depois o erro sobe para quem chamou\n\n'
              f'`#smartlar` `#whatsapp` · `{VERSAO}`',
              [-60, -420], 1240, 340, 6),
-        nota('Modo demonstração',
-             '### 🛡️ Modo demonstração\n'
-             'Os telefones dos dados de exemplo são fictícios, mas existem de verdade. '
-             'Com `modo_demonstracao` ligado, mensagens para clientes e técnicos **caem no grupo do Rafael** '
-             'com o aviso *[Para Fulano]*.\n\n'
-             'Números em `numeros_liberados` recebem de verdade (ex: o seu, para demonstrar).',
+        nota('Consentimento',
+             '### 🛡️ Consentimento (opt-in)\n'
+             'Só recebe mensagem direta quem **autorizou**: o cliente com *Avisar pelo WhatsApp* marcado no cadastro.\n\n'
+             'Sem autorização (os telefones fictícios dos dados de exemplo, os técnicos), a mensagem '
+             '**vai para o grupo do Rafael** com o aviso *[Para Fulano]*, e nunca para o número.',
              [400, -60], 520, 440),
         node('Quando chamado', 'executeWorkflowTrigger', 1.1, [0, 100],
-             {'workflowInputs': {'values': [{'name': 'mensagem'}, {'name': 'telefone'}, {'name': 'destinatario'}]}}),
+             {'workflowInputs': {'values': [{'name': 'mensagem'}, {'name': 'telefone'}, {'name': 'destinatario'},
+                                            {'name': 'whatsapp_autorizado'}]}}),
         node('Config da Evolution', 'set', 3.4, [220, 100], campos(
             ('evolution_url', 'https://n8n-evolution-api.dnfcju.easypanel.host'),
             ('instancia', 'smartlar'),
             ('destino_padrao', DESTINO_PADRAO),
-            ('modo_demonstracao', True, 'boolean'),
-            ('numeros_liberados', NUMEROS_LIBERADOS),
             manter_outros=True)),
-        node('Enviar direto ao destinatário?', 'if', 2.2, [460, 100], condicoes(condicao(
-            "={{ !!$json.telefone && (!$json.modo_demonstracao || "
-            "$json.numeros_liberados.split(',').map(n => n.trim()).includes($json.telefone)) }}",
+        node('Destinatário autorizou?', 'if', 2.2, [460, 100], condicoes(condicao(
+            "={{ !!$json.telefone && String($json.whatsapp_autorizado) === 'true' }}",
             'true', tipo='boolean'))),
         node('Destino: destinatário', 'set', 3.4, [700, 0], campos(
             ('numero', '={{ $json.telefone }}'),
@@ -180,9 +177,9 @@ workflows['sub'] = {
             retryOnFail=True, maxTries=3, waitBetweenTries=3000),
     ],
     'connections': ligar(('Quando chamado', 'Config da Evolution'),
-                         ('Config da Evolution', 'Enviar direto ao destinatário?'),
-                         ('Enviar direto ao destinatário?', 'Destino: destinatário', 0),
-                         ('Enviar direto ao destinatário?', 'Destino: grupo do Rafael', 1),
+                         ('Config da Evolution', 'Destinatário autorizou?'),
+                         ('Destinatário autorizou?', 'Destino: destinatário', 0),
+                         ('Destinatário autorizou?', 'Destino: grupo do Rafael', 1),
                          ('Destino: destinatário', 'Enviar mensagem (Evolution)'),
                          ('Destino: grupo do Rafael', 'Enviar mensagem (Evolution)')),
     'settings': {**configuracoes(alerta_de_erro=False), 'callerPolicy': 'workflowsFromSameOwner'},
@@ -415,6 +412,7 @@ def mensagem_cliente(nome, pos, texto):
     return node(nome, 'set', 3.4, pos, campos(
         ('telefone', '={{ $json.cliente_telefone }}'),
         ('destinatario', '={{ $json.cliente_nome }}'),
+        ('whatsapp_autorizado', '={{ $json.cliente_notificar_whatsapp }}', 'boolean'),
         ('mensagem', texto + ASSINATURA)))
 
 
@@ -434,7 +432,7 @@ workflows['status_cliente'] = {
              'a cada etapa do pedido (aprovado, agendado, em andamento, concluído).\n\n'
              '**Gatilho:** trigger `pedidos_notificar_status` (só nas etapas acima)\n'
              '**Destino:** WhatsApp do cliente, via *[Sub] Enviar WhatsApp*. '
-             'Em **modo demonstração**, cai no grupo do Rafael com o aviso *[Para Fulano]*\n'
+             'Só se o cliente autorizou no cadastro; sem autorização, cai no grupo do Rafael com o aviso *[Para Fulano]*\n'
              '**Falhas:** *[Erro] Alerta de falha*\n\n'
              f'`#smartlar` `#supabase` `#whatsapp` `#cliente` · `{VERSAO}`',
              [-60, -440], 1460, 320, 6),

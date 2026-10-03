@@ -103,6 +103,16 @@
               "canBeUsedToMatch": true,
               "type": "string",
               "removed": true
+            },
+            {
+              "id": "whatsapp_autorizado",
+              "displayName": "whatsapp_autorizado",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "canBeUsedToMatch": true,
+              "type": "string",
+              "removed": true
             }
           ],
           "attemptToConvertTypes": false,

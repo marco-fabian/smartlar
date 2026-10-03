@@ -11,7 +11,7 @@
         -440
       ],
       "parameters": {
-        "content": "## 📣 Status do pedido → WhatsApp do cliente\n**Além do escopo.** Resolve a dor *\"clientes ligam perguntando status\"*: o cliente recebe uma mensagem a cada etapa do pedido (aprovado, agendado, em andamento, concluído).\n\n**Gatilho:** trigger `pedidos_notificar_status` (só nas etapas acima)\n**Destino:** WhatsApp do cliente, via *[Sub] Enviar WhatsApp*. Em **modo demonstração**, cai no grupo do Rafael com o aviso *[Para Fulano]*\n**Falhas:** *[Erro] Alerta de falha*\n\n`#smartlar` `#supabase` `#whatsapp` `#cliente` · `v1.0 · 02/10/2026`",
+        "content": "## 📣 Status do pedido → WhatsApp do cliente\n**Além do escopo.** Resolve a dor *\"clientes ligam perguntando status\"*: o cliente recebe uma mensagem a cada etapa do pedido (aprovado, agendado, em andamento, concluído).\n\n**Gatilho:** trigger `pedidos_notificar_status` (só nas etapas acima)\n**Destino:** WhatsApp do cliente, via *[Sub] Enviar WhatsApp*. Só se o cliente autorizou no cadastro; sem autorização, cai no grupo do Rafael com o aviso *[Para Fulano]*\n**Falhas:** *[Erro] Alerta de falha*\n\n`#smartlar` `#supabase` `#whatsapp` `#cliente` · `v1.0 · 02/10/2026`",
         "width": 1460,
         "height": 320,
         "color": 6
@@ -294,6 +294,12 @@
               "type": "string"
             },
             {
+              "id": "1693e2b8-95d0-5648-8310-3d7389052c85",
+              "name": "whatsapp_autorizado",
+              "value": "={{ $json.cliente_notificar_whatsapp }}",
+              "type": "boolean"
+            },
+            {
               "id": "fea1831a-f4e9-50d2-b653-40434dfdf522",
               "name": "mensagem",
               "value": "=Olá, {{ $json.cliente_nome.split(' ')[0] }}! 👋\n\nSeu pedido *#{{ $json.numero }}* foi *aprovado*. Obrigado pela confiança!\n\n💰 {{ Number($json.valor_total).toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' }) }}\n\nEm breve entramos em contato para agendar a instalação.\n\n_Equipe SmartLar_",
@@ -327,6 +333,12 @@
               "name": "destinatario",
               "value": "={{ $json.cliente_nome }}",
               "type": "string"
+            },
+            {
+              "id": "1693e2b8-95d0-5648-8310-3d7389052c85",
+              "name": "whatsapp_autorizado",
+              "value": "={{ $json.cliente_notificar_whatsapp }}",
+              "type": "boolean"
             },
             {
               "id": "9bb000d3-210b-5441-b9ae-6af04fbbf6de",
@@ -364,6 +376,12 @@
               "type": "string"
             },
             {
+              "id": "1693e2b8-95d0-5648-8310-3d7389052c85",
+              "name": "whatsapp_autorizado",
+              "value": "={{ $json.cliente_notificar_whatsapp }}",
+              "type": "boolean"
+            },
+            {
               "id": "62767a51-1b1c-503e-b8bf-66fc9c795e3e",
               "name": "mensagem",
               "value": "=Olá, {{ $json.cliente_nome.split(' ')[0] }}! 🔧\n\nO técnico *{{ $json.tecnico_nome }}* começou a instalação do seu pedido *#{{ $json.numero }}*.\n\n_Equipe SmartLar_",
@@ -399,6 +417,12 @@
               "type": "string"
             },
             {
+              "id": "1693e2b8-95d0-5648-8310-3d7389052c85",
+              "name": "whatsapp_autorizado",
+              "value": "={{ $json.cliente_notificar_whatsapp }}",
+              "type": "boolean"
+            },
+            {
               "id": "b9f75271-01fd-560e-aa11-95d2c49844cc",
               "name": "mensagem",
               "value": "=Olá, {{ $json.cliente_nome.split(' ')[0] }}! ✅\n\nSua instalação foi *concluída*. Obrigado por escolher a SmartLar!\n\nFicou alguma dúvida sobre os equipamentos? É só responder esta mensagem.\n\n_Equipe SmartLar_",
@@ -430,7 +454,8 @@
           "value": {
             "mensagem": "={{ $json.mensagem }}",
             "telefone": "={{ $json.telefone }}",
-            "destinatario": "={{ $json.destinatario }}"
+            "destinatario": "={{ $json.destinatario }}",
+            "whatsapp_autorizado": "={{ String($json.whatsapp_autorizado ?? false) }}"
           },
           "matchingColumns": [],
           "schema": [
@@ -457,6 +482,16 @@
             {
               "id": "destinatario",
               "displayName": "destinatario",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "canBeUsedToMatch": true,
+              "type": "string",
+              "removed": false
+            },
+            {
+              "id": "whatsapp_autorizado",
+              "displayName": "whatsapp_autorizado",
               "required": false,
               "defaultMatch": false,
               "display": true,

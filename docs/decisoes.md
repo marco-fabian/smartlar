@@ -107,8 +107,8 @@ Outra dor do enunciado: "os técnicos não sabem a agenda sem ligar pro Rafael".
 ### Lembrete de orçamentos parados
 Dor do enunciado: "esquece orçamentos que mandou e perde vendas". O destaque no dashboard só ajuda se o Rafael abrir o sistema. Todo dia às 9h ele recebe no WhatsApp os orçamentos sem resposta há 3 dias ou mais (configurável), do mais antigo para o mais novo, com o total parado. Cada orçamento vem com um link `wa.me` com a mensagem de follow-up já escrita para o cliente: o Rafael revisa e envia com um toque, sem a automação falar com o cliente por conta própria. Sem orçamento parado, não manda nada.
 
-### Modo demonstração
-Os telefones do seed são fictícios, mas o formato é real e poderiam existir. O sub-workflow tem um modo demonstração (ligado): mensagens para clientes e técnicos vão para o grupo do Rafael com o aviso *[Para Fulano]*. Uma lista de números liberados (fora do repositório) recebe de verdade, para a demonstração ao vivo.
+### Consentimento para o WhatsApp (opt-in)
+O cliente só recebe mensagem direta se autorizou: uma caixa no cadastro ("Avisar pelo WhatsApp a cada etapa do pedido"), desmarcada por padrão, grava `clientes.notificar_whatsapp`. É o que a LGPD e as políticas do WhatsApp pedem. Sem autorização, a mensagem vai para o grupo do Rafael com o aviso *[Para Fulano]*, nunca para o número: isso protege os telefones fictícios do seed (que poderiam existir de verdade) e deixa o Rafael ver o que seria enviado. Ativar a autorização de um cliente já cadastrado pede confirmação. Quem avaliar o sistema pode se cadastrar como cliente com o próprio número e receber as mensagens.
 
 ## Interpretações do enunciado
 - **Cancelamento**: a tabela do enunciado lista `... → concluido → cancelado`, mas as regras dizem que só `orcamento` e `aprovado` podem ser cancelados. Segui as regras. Se um pedido `agendado` puder ser cancelado, é uma linha a mais em `status_transicoes`.
