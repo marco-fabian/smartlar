@@ -15,15 +15,24 @@ Sistema para a **SmartLar**, empresa de automação residencial, parar de usar u
 
 ## 🎯 Do problema à solução
 
-O Rafael, dono da SmartLar, tinha cinco dores. Cada uma tem uma resposta no sistema:
+O Rafael, dono da SmartLar, tinha cinco dores. O escopo do teste resolvia parte delas; o que faltava para resolver de verdade, eu acrescentei:
 
-| 😩 Dor | ✅ Solução | 📍 Onde |
+| 😩 Dor | 📋 O que o enunciado pedia | ➕ O que eu acrescentei |
 |---|---|---|
-| Esquece orçamentos que mandou e perde vendas | Orçamentos parados há 7+ dias ficam destacados no dashboard, e **todo dia às 9h** ele recebe a lista no WhatsApp com a mensagem de follow-up pronta para cada cliente | Dashboard · n8n |
-| Não sabe quais instalações estão pendentes na semana | Próximas instalações no dashboard e **resumo do dia seguinte às 18h** no WhatsApp | Dashboard · n8n |
-| Não sabe quanto faturou e quanto tem a receber | Indicadores do mês no dashboard e **planilha de faturamento** preenchida sozinha a cada pedido concluído | Dashboard · Google Sheets |
-| Os técnicos não sabem a agenda sem ligar pra ele | Tela de agenda por técnico e **cada técnico recebe a própria agenda** no WhatsApp, com endereço, link do Maps e o que instalar | Agenda · n8n |
-| Clientes ligam perguntando o status | **O cliente recebe uma mensagem a cada etapa**: aprovado, agendado (data, hora e técnico), em andamento e concluído, se autorizou no cadastro | Clientes, n8n |
+| Esquece orçamentos que mandou e perde vendas | Lista de orçamentos aguardando aprovação no dashboard | Orçamentos parados há 7+ dias destacados e **lembrete todo dia às 9h** no WhatsApp, com a mensagem de follow-up pronta para cada cliente |
+| Não sabe quais instalações estão pendentes na semana | Próximas instalações no dashboard e alerta diário das instalações de amanhã | Alerta no WhatsApp às 18h (avisa também quando não há nenhuma), duração de cada instalação e **bloqueio de conflito de horário** do técnico |
+| Não sabe quanto faturou e quanto tem a receber | Indicadores do mês no dashboard; planilha de faturamento como bônus | Bônus entregue: a planilha é preenchida **a cada pedido concluído**, sem duplicar linhas |
+| Os técnicos não sabem a agenda sem ligar pra ele | Tela de agenda por técnico | Os técnicos não têm login, então **cada um recebe a própria agenda** no WhatsApp, com endereço, link do Maps, telefone do cliente e o que instalar |
+| Clientes ligam perguntando o status | Nada | **O cliente recebe uma mensagem a cada etapa** (aprovado, agendado, em andamento, concluído), se autorizou no cadastro |
+
+Além das dores, também entreguei:
+
+- Login com Supabase Auth, RLS e histórico de status (bônus do enunciado)
+- Regras de negócio no banco: total, fluxo de status e conflito de agenda valem para a tela, o n8n e qualquer SQL
+- **Nenhum evento se perde:** se o n8n cair, o banco reenvia sozinho até a entrega ser confirmada
+- Alerta de falha no WhatsApp para qualquer automação
+- Workflows sem nó de código, com notas, tags e versionados no repositório
+- Deploy na Cloudflare
 
 ---
 
