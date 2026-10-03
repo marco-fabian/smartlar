@@ -91,7 +91,7 @@ O evento de INSERT chega com `valor_total = 0` (os itens entram depois, na mesma
 Três automações mandam WhatsApp. A chamada à Evolution API fica num lugar só (com retry de 3 tentativas): trocar de provedor (ex: API oficial da Meta) é mexer em um workflow.
 
 ### Tratamento de erro
-Todas as automações apontam para *[Erro] Alerta de falha*, que manda no WhatsApp o workflow, o nó, o erro e o link da execução. O resumo diário avisa também quando não há instalações, assim dá pra saber que a rotina rodou. O faturamento usa *append or update* pelo ID do pedido: se o evento chegar duas vezes, a linha não duplica.
+Todas as automações apontam para *[Erro] Alerta de falha*, que manda no WhatsApp o workflow, o nó, o erro e o link da execução. O resumo diário avisa também quando não há instalações, assim dá pra saber que a rotina rodou. O faturamento procura o ID do pedido na planilha antes de gravar (se o evento chegar duas vezes, a linha não duplica) e grava com o append nativo do Google Sheets, que é atômico: num teste com dois pedidos concluídos no mesmo instante, o modo padrão do n8n sobrescreveu uma linha; com o append nativo, as duas ficaram.
 
 ### Sem nó de código
 Datas com Luxon nas expressões, filtros no nó do Supabase, IF para o caso "sem instalações", Sort + Aggregate para montar a lista. O fluxo fica legível no canvas.

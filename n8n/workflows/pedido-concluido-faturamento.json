@@ -8,12 +8,12 @@
       "typeVersion": 1,
       "position": [
         -60,
-        -420
+        -440
       ],
       "parameters": {
-        "content": "## 💰 Pedido concluído → Faturamento\n**Automação 3 (bônus).** Cada pedido concluído vira uma linha na planilha *SmartLar · Faturamento*: o começo de um controle financeiro.\n\n**Gatilho:** trigger `pedidos_notificar_concluido` (só dispara na transição para `concluido`)\n**Idempotente:** *append or update* pela coluna *ID do pedido*. Se o evento chegar duas vezes, a linha não duplica.\n**Falhas:** *[Erro] Alerta de falha*\n\n`#smartlar` `#supabase` `#google-sheets` · `v1.0 · 02/10/2026`",
-        "width": 1060,
-        "height": 320,
+        "content": "## 💰 Pedido concluído → Faturamento\n**Automação 3 (bônus).** Cada pedido concluído vira uma linha na planilha *SmartLar · Faturamento*: o começo de um controle financeiro.\n\n**Gatilho:** trigger `pedidos_notificar_concluido` (só dispara na transição para `concluido`)\n**Sem duplicar:** antes de gravar, procura o *ID do pedido* na planilha; se já estiver lá, não grava de novo.\n**Sem perder linha:** grava com *append*, que é atômico no Google Sheets: dois pedidos concluídos no mesmo segundo viram duas linhas.\n**Falhas:** *[Erro] Alerta de falha*\n\n`#smartlar` `#supabase` `#google-sheets` · `v1.0 · 02/10/2026`",
+        "width": 1500,
+        "height": 340,
         "color": 6
       }
     },
@@ -111,16 +111,90 @@
       }
     },
     {
+      "id": "7b622a52-7445-5c90-9d35-fa1c7960fdc8",
+      "name": "Já está na planilha?",
+      "type": "n8n-nodes-base.googleSheets",
+      "typeVersion": 4.7,
+      "position": [
+        740,
+        60
+      ],
+      "parameters": {
+        "operation": "read",
+        "documentId": {
+          "__rl": true,
+          "value": "1dP6mTmua0hU049ypz6i9Y7rUfY50n-AD2LXrdldlxeo",
+          "mode": "id"
+        },
+        "sheetName": {
+          "__rl": true,
+          "value": "gid=0",
+          "mode": "list",
+          "cachedResultName": "Página1"
+        },
+        "filtersUI": {
+          "values": [
+            {
+              "lookupColumn": "ID do pedido",
+              "lookupValue": "={{ $json.id }}"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "credentials": {
+        "googleSheetsOAuth2Api": {
+          "id": "xNM7JPD0hsXt7ANG",
+          "name": "Google Sheets account"
+        }
+      },
+      "alwaysOutputData": true
+    },
+    {
+      "id": "8f8bc30d-fe0c-587d-9fc0-1b18d02d85b0",
+      "name": "Ainda não registrado?",
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2.2,
+      "position": [
+        980,
+        60
+      ],
+      "parameters": {
+        "conditions": {
+          "options": {
+            "caseSensitive": true,
+            "leftValue": "",
+            "typeValidation": "strict",
+            "version": 2
+          },
+          "conditions": [
+            {
+              "id": "51d46233-d9d9-57ae-9920-9b3964881ce1",
+              "leftValue": "={{ $json['ID do pedido'] }}",
+              "rightValue": "",
+              "operator": {
+                "type": "string",
+                "operation": "notExists",
+                "singleValue": true
+              }
+            }
+          ],
+          "combinator": "and"
+        },
+        "options": {}
+      }
+    },
+    {
       "id": "9ad741ce-2643-533f-8d1e-ce2e1b957f01",
       "name": "Registrar no Google Sheets",
       "type": "n8n-nodes-base.googleSheets",
       "typeVersion": 4.7,
       "position": [
-        760,
-        60
+        1220,
+        -40
       ],
       "parameters": {
-        "operation": "appendOrUpdate",
+        "operation": "append",
         "documentId": {
           "__rl": true,
           "value": "1dP6mTmua0hU049ypz6i9Y7rUfY50n-AD2LXrdldlxeo",
@@ -135,17 +209,15 @@
         "columns": {
           "mappingMode": "defineBelow",
           "value": {
-            "Concluído em": "={{ DateTime.fromISO($json.concluido_em).setZone('America/Sao_Paulo').toFormat('dd/MM/yyyy HH:mm') }}",
-            "Pedido": "=#{{ $json.numero }}",
-            "Cliente": "={{ $json.cliente_nome }}",
-            "Valor (R$)": "={{ $json.valor_total }}",
-            "Forma de pagamento": "={{ ({ pix: 'Pix', cartao_credito: 'Cartão de crédito', cartao_debito: 'Cartão de débito', boleto: 'Boleto', dinheiro: 'Dinheiro' })[$json.forma_pagamento] }}",
-            "Técnico": "={{ $json.tecnico_nome }}",
-            "ID do pedido": "={{ $json.id }}"
+            "Concluído em": "={{ DateTime.fromISO($('Buscar pedido completo').item.json.concluido_em).setZone('America/Sao_Paulo').toFormat('dd/MM/yyyy HH:mm') }}",
+            "Pedido": "=#{{ $('Buscar pedido completo').item.json.numero }}",
+            "Cliente": "={{ $('Buscar pedido completo').item.json.cliente_nome }}",
+            "Valor (R$)": "={{ $('Buscar pedido completo').item.json.valor_total }}",
+            "Forma de pagamento": "={{ ({ pix: 'Pix', cartao_credito: 'Cartão de crédito', cartao_debito: 'Cartão de débito', boleto: 'Boleto', dinheiro: 'Dinheiro' })[$('Buscar pedido completo').item.json.forma_pagamento] }}",
+            "Técnico": "={{ $('Buscar pedido completo').item.json.tecnico_nome }}",
+            "ID do pedido": "={{ $('Buscar pedido completo').item.json.id }}"
           },
-          "matchingColumns": [
-            "ID do pedido"
-          ],
+          "matchingColumns": [],
           "schema": [
             {
               "id": "Concluído em",
@@ -214,7 +286,9 @@
           "attemptToConvertTypes": false,
           "convertFieldsToString": false
         },
-        "options": {}
+        "options": {
+          "useAppend": true
+        }
       },
       "credentials": {
         "googleSheetsOAuth2Api": {
@@ -222,6 +296,17 @@
           "name": "Google Sheets account"
         }
       }
+    },
+    {
+      "id": "81258635-0c62-5b2d-8206-1d76be7f7e0c",
+      "name": "Já registrado",
+      "type": "n8n-nodes-base.noOp",
+      "typeVersion": 1,
+      "position": [
+        1220,
+        160
+      ],
+      "parameters": {}
     }
   ],
   "connections": {
@@ -251,7 +336,36 @@
       "main": [
         [
           {
+            "node": "Já está na planilha?",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Já está na planilha?": {
+      "main": [
+        [
+          {
+            "node": "Ainda não registrado?",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Ainda não registrado?": {
+      "main": [
+        [
+          {
             "node": "Registrar no Google Sheets",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Já registrado",
             "type": "main",
             "index": 0
           }

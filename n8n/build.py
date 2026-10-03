@@ -383,14 +383,20 @@ workflows['amanha'] = {
 
 PAGAMENTOS = ("{ pix: 'Pix', cartao_credito: 'Cartão de crédito', cartao_debito: 'Cartão de débito', "
               "boleto: 'Boleto', dinheiro: 'Dinheiro' }")
+# Depois da busca na planilha, $json passa a ser a linha da planilha: o pedido vem do nó de busca
+PEDIDO = "$('Buscar pedido completo').item.json"
 COLUNAS = {
-    'Concluído em': '={{ ' + HORA_SP.format('$json.concluido_em') + ".toFormat('dd/MM/yyyy HH:mm') }}",
-    'Pedido': '=#{{ $json.numero }}',
-    'Cliente': '={{ $json.cliente_nome }}',
-    'Valor (R$)': '={{ $json.valor_total }}',
-    'Forma de pagamento': '={{ (' + PAGAMENTOS + ')[$json.forma_pagamento] }}',
-    'Técnico': '={{ $json.tecnico_nome }}',
-    'ID do pedido': '={{ $json.id }}',
+    'Concluído em': '={{ ' + HORA_SP.format(PEDIDO + '.concluido_em') + ".toFormat('dd/MM/yyyy HH:mm') }}",
+    'Pedido': '=#{{ ' + PEDIDO + '.numero }}',
+    'Cliente': '={{ ' + PEDIDO + '.cliente_nome }}',
+    'Valor (R$)': '={{ ' + PEDIDO + '.valor_total }}',
+    'Forma de pagamento': '={{ (' + PAGAMENTOS + ')[' + PEDIDO + '.forma_pagamento] }}',
+    'Técnico': '={{ ' + PEDIDO + '.tecnico_nome }}',
+    'ID do pedido': '={{ ' + PEDIDO + '.id }}',
+}
+PLANILHA = {
+    'documentId': {'__rl': True, 'value': PLANILHA_ID, 'mode': 'id'},
+    'sheetName': {'__rl': True, 'value': 'gid=0', 'mode': 'list', 'cachedResultName': 'Página1'},
 }
 
 workflows['faturamento'] = {
@@ -401,30 +407,42 @@ workflows['faturamento'] = {
              '**Automação 3 (bônus).** Cada pedido concluído vira uma linha na planilha *SmartLar · Faturamento*: '
              'o começo de um controle financeiro.\n\n'
              '**Gatilho:** trigger `pedidos_notificar_concluido` (só dispara na transição para `concluido`)\n'
-             '**Idempotente:** *append or update* pela coluna *ID do pedido*. Se o evento chegar duas vezes, a linha não duplica.\n'
+             '**Sem duplicar:** antes de gravar, procura o *ID do pedido* na planilha; se já estiver lá, não grava de novo.\n'
+             '**Sem perder linha:** grava com *append*, que é atômico no Google Sheets: '
+             'dois pedidos concluídos no mesmo segundo viram duas linhas.\n'
              '**Falhas:** *[Erro] Alerta de falha*\n\n'
              f'`#smartlar` `#supabase` `#google-sheets` · `{VERSAO}`',
-             [-60, -420], 1060, 320, 6),
+             [-60, -440], 1500, 340, 6),
         webhook('Pedido concluído (Supabase)', 'smartlar/pedido-concluido', [0, 60]),
         node('Mudou para concluído?', 'filter', 2.2, [220, 60], condicoes(
             condicao('={{ $json.body.record.status }}', 'equals', 'concluido'),
             condicao('={{ $json.body.old_record.status }}', 'notEquals', 'concluido'))),
         buscar_pedido('Buscar pedido completo', [480, 60]),
-        node('Registrar no Google Sheets', 'googleSheets', 4.7, [760, 60], {
-            'operation': 'appendOrUpdate',
-            'documentId': {'__rl': True, 'value': PLANILHA_ID, 'mode': 'id'},
-            'sheetName': {'__rl': True, 'value': 'gid=0', 'mode': 'list', 'cachedResultName': 'Página1'},
+        node('Já está na planilha?', 'googleSheets', 4.7, [740, 60], {
+            'operation': 'read', **PLANILHA,
+            'filtersUI': {'values': [{'lookupColumn': 'ID do pedido', 'lookupValue': '={{ $json.id }}'}]},
+            'options': {}},
+            credentials={'googleSheetsOAuth2Api': IDS['credenciais']['google_sheets']}, alwaysOutputData=True),
+        node('Ainda não registrado?', 'if', 2.2, [980, 60],
+             condicoes(condicao("={{ $json['ID do pedido'] }}", 'notExists'))),
+        node('Registrar no Google Sheets', 'googleSheets', 4.7, [1220, -40], {
+            'operation': 'append', **PLANILHA,
             'columns': {
-                'mappingMode': 'defineBelow', 'value': COLUNAS, 'matchingColumns': ['ID do pedido'],
+                'mappingMode': 'defineBelow', 'value': COLUNAS, 'matchingColumns': [],
                 'schema': [{'id': c, 'displayName': c, 'required': False, 'defaultMatch': False, 'display': True,
                             'type': 'string', 'canBeUsedToMatch': True} for c in COLUNAS],
                 'attemptToConvertTypes': False, 'convertFieldsToString': False},
-            'options': {}},
+            # append nativo da API do Google: atômico, duas execuções simultâneas não se sobrescrevem
+            'options': {'useAppend': True}},
             credentials={'googleSheetsOAuth2Api': IDS['credenciais']['google_sheets']}),
+        node('Já registrado', 'noOp', 1, [1220, 160], {}),
     ],
     'connections': ligar(('Pedido concluído (Supabase)', 'Mudou para concluído?'),
                          ('Mudou para concluído?', 'Buscar pedido completo'),
-                         ('Buscar pedido completo', 'Registrar no Google Sheets')),
+                         ('Buscar pedido completo', 'Já está na planilha?'),
+                         ('Já está na planilha?', 'Ainda não registrado?'),
+                         ('Ainda não registrado?', 'Registrar no Google Sheets', 0),
+                         ('Ainda não registrado?', 'Já registrado', 1)),
     'settings': configuracoes(),
 }
 
