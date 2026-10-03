@@ -13,13 +13,17 @@
 ## Como o Supabase chama o n8n
 
 ```
-INSERT/UPDATE em pedidos ──trigger──▶ notificar_n8n() ──pg_net (após o COMMIT)──▶ webhook do n8n
-                                         │
-                                         └─ URL e segredo lidos do Supabase Vault
+INSERT/UPDATE em pedidos ──trigger──▶ eventos_n8n (outbox, na mesma transação)
+                                          │
+                                          └─▶ enviar_evento_n8n() ──pg_net (após o COMMIT)──▶ webhook do n8n
+                                                     ▲
+pg_cron, a cada 5 min ──▶ reprocessar_eventos_n8n(): confirma entregas (2xx) e reenvia falhas
 ```
 
 - O webhook só aceita requisições com o header `X-Webhook-Secret` correto (credencial *SmartLar · Webhook Supabase*).
 - Nenhum segredo fica no repositório: URLs e segredo estão no Vault; chaves de API, nas credenciais do n8n.
+- Reenvio com intervalo crescente (5, 10, 20, 40 min... até 6 h), no máximo 10 tentativas. O corpo leva `evento_id` e `tentativa`.
+- URL e segredo de cada webhook são lidos do Supabase Vault na hora do envio.
 - O seed não dispara notificações (`set app.seed = 'on'`).
 
 ## Versionamento

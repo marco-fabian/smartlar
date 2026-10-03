@@ -47,6 +47,7 @@ flowchart LR
 ```
 
 - O **banco avisa o n8n** por trigger, sem consulta periódica. A requisição sai só depois do commit, então o n8n sempre encontra o pedido completo.
+- **Nenhum evento se perde:** todo evento fica registrado no banco (outbox). Se o n8n estiver fora do ar, o próprio banco reenvia a cada 5 minutos até a entrega ser confirmada.
 - As **regras de negócio ficam no banco**: o sistema, o n8n ou um SQL manual passam pelas mesmas validações.
 
 ---
@@ -179,6 +180,7 @@ erDiagram
 - 📅 O mesmo técnico não pode ter duas instalações no mesmo horário (cada instalação tem duração estimada).
 - 🔒 Itens só mudam enquanto o pedido é orçamento.
 - 🕓 Cada mudança de status fica no `historico_status`.
+- 📬 Todo evento para o n8n é registrado e reenviado até a entrega ser confirmada.
 - 🔐 RLS: só usuário logado acessa os dados.
 
 ---
@@ -235,6 +237,6 @@ Banco: aplique os arquivos de `supabase/migrations` em ordem e depois o `supabas
 
 - WhatsApp via Evolution API (não oficial). Em produção: API oficial da Meta.
 - Um único perfil de acesso; técnicos sem login próprio. Próximo passo: papéis (admin/técnico) com RLS por técnico.
-- Se o n8n estiver fora do ar, o evento fica registrado no banco mas não é reenviado automaticamente.
+- As rotinas agendadas (9h e 18h) não recuperam um horário perdido se o n8n estiver fora do ar naquele momento.
 
 Mais detalhes e o raciocínio de cada escolha em [docs/decisoes.md](docs/decisoes.md).

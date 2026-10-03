@@ -81,6 +81,9 @@ Um trigger em `pedidos` usa `pg_net` para chamar o webhook do n8n. A requisiçã
 ### Segredos fora do código
 URLs dos webhooks e o segredo do header `X-Webhook-Secret` ficam no Supabase Vault; a migration só lê de lá. As chaves (Supabase service role, Evolution) ficam nas credenciais do n8n. O destino das mensagens (um grupo do WhatsApp) entra só no deploy, porque o repositório é público.
 
+### Reenvio de eventos que falharam (outbox)
+Se o n8n estiver fora do ar, um webhook chamado direto se perde: o `pg_net` registra a falha, mas não guarda o corpo da requisição e apaga a resposta em 6 horas. Por isso todo evento é gravado na tabela `eventos_n8n` **na mesma transação** do pedido (padrão outbox): se o pedido existe, o evento existe. O envio vira uma tentativa registrada. Uma rotina no próprio banco (`pg_cron`, a cada 5 minutos) confirma as entregas pela resposta 2xx do n8n e reenvia o que falhou, com intervalo crescente (5, 10, 20, 40 min... até 6 h) e no máximo 10 tentativas. A rotina roda no banco e não no n8n: se o n8n está fora do ar, uma rotina dentro dele também estaria. O corpo enviado leva `evento_id` e `tentativa`, o que permite rastrear cada execução no n8n. Testado derrubando o webhook: a falha (HTTP 404) ficou registrada e o evento chegou na tentativa seguinte, depois que o webhook voltou.
+
 ### n8n busca o pedido de novo em vez de confiar no payload
 O evento de INSERT chega com `valor_total = 0` (os itens entram depois, na mesma transação). Consultar a view `vw_pedidos` pelo ID devolve o dado certo e já traz nome do cliente e técnico.
 
@@ -117,7 +120,7 @@ O cliente só recebe mensagem direta se autorizou: uma caixa no cadastro ("Avisa
 
 ## Limitações conhecidas / próximos passos
 - WhatsApp pela Evolution API (não oficial, risco de bloqueio do número). Em produção: API oficial da Meta (Cloud API).
-- Se o n8n estiver fora do ar, o `pg_net` registra a falha em `net._http_response` mas não reenvia. Com mais tempo: fila com retry (ou reprocessar pela tabela de respostas).
+- As rotinas agendadas do n8n (9h e 18h) não recuperam um horário perdido se o n8n estiver fora do ar exatamente naquele momento.
 - Um único perfil de acesso: técnicos não têm login próprio. Com mais tempo: papéis (admin/técnico) e RLS por técnico.
 - Categorias são uma lista fixa (`check`). Se o Rafael precisar criar categorias, viram tabela própria.
 - Sem controle de pagamento parcial/recebido: "a receber" é uma estimativa pelo status.
