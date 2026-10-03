@@ -56,7 +56,9 @@ def publicar(chave):
     ids = json.loads((RAIZ / 'ids.json').read_text(encoding='utf-8'))
     texto = (build.SAIDA / f'{build.ARQUIVOS[chave]}.json').read_text(encoding='utf-8')
     # O destino (número ou grupo do Rafael) não vai para o repositório público: entra só na publicação
-    if os.environ.get('SMARTLAR_WHATSAPP_DESTINO'):
+    if build.DESTINO_PADRAO in texto:
+        if not os.environ.get('SMARTLAR_WHATSAPP_DESTINO'):
+            sys.exit(f'{chave}: defina SMARTLAR_WHATSAPP_DESTINO (número ou grupo que recebe as notificações)')
         texto = texto.replace(build.DESTINO_PADRAO, os.environ['SMARTLAR_WHATSAPP_DESTINO'])
     # Números que recebem de verdade mesmo em modo demonstração (separados por vírgula)
     texto = texto.replace(build.NUMEROS_LIBERADOS, os.environ.get('SMARTLAR_WHATSAPP_LIBERADOS', ''))
