@@ -8,12 +8,12 @@
       "typeVersion": 1,
       "position": [
         -60,
-        -440
+        -480
       ],
       "parameters": {
-        "content": "## 📋 Instalações de amanhã → WhatsApp\n**Automação 2 (obrigatória).** Todo dia às 18h manda pro Rafael o resumo das instalações do dia seguinte: horário, técnico, cliente e endereço.\n\n**Fuso:** America/Sao_Paulo. O banco guarda em UTC; a janela de \"amanhã\" é calculada em SP.\n**Sem instalações:** manda um aviso mesmo assim, pra confirmar que a rotina rodou.\n**Falhas:** *[Erro] Alerta de falha*\n\n`#smartlar` `#supabase` `#whatsapp` `#agendado` · `v1.0 · 02/10/2026`",
-        "width": 1820,
-        "height": 320,
+        "content": "## 📋 Instalações de amanhã → WhatsApp\n**Automação 2 (obrigatória) + agenda dos técnicos.** Todo dia às 18h:\n- o Rafael recebe o resumo de todas as instalações do dia seguinte (horário, técnico, cliente, endereço);\n- **cada técnico recebe a própria agenda**, com endereço, link do Maps, telefone do cliente e o que instalar (resolve *\"os técnicos não sabem a agenda sem ligar pro Rafael\"*).\n\n**Fuso:** America/Sao_Paulo. O banco guarda em UTC; a janela de \"amanhã\" é calculada em SP.\n**Sem instalações:** o Rafael recebe um aviso mesmo assim, pra confirmar que a rotina rodou.\n**Falhas:** *[Erro] Alerta de falha*\n\n`#smartlar` `#supabase` `#whatsapp` `#agendado` · `v1.0 · 02/10/2026`",
+        "width": 2200,
+        "height": 360,
         "color": 6
       }
     },
@@ -29,7 +29,7 @@
       "parameters": {
         "content": "### 1. Consulta o banco\nPedidos `agendado` com `data_instalacao` de 00:00 até 23:59 de amanhã.\n*Always Output Data* ligado na busca: sem resultado, o fluxo segue para o aviso.",
         "width": 900,
-        "height": 520
+        "height": 820
       }
     },
     {
@@ -42,9 +42,24 @@
         -100
       ],
       "parameters": {
-        "content": "### 2. Monta e envia o resumo",
-        "width": 900,
-        "height": 520
+        "content": "### 2. Resumo para o Rafael",
+        "width": 1000,
+        "height": 480
+      }
+    },
+    {
+      "id": "0e0b4fe6-cad4-5d47-9436-bee9c25a510f",
+      "name": "Etapa 3",
+      "type": "n8n-nodes-base.stickyNote",
+      "typeVersion": 1,
+      "position": [
+        1080,
+        400
+      ],
+      "parameters": {
+        "content": "### 3. Agenda de cada técnico\nUma linha por instalação → agrupa por técnico (*Summarize*) → uma mensagem por técnico.",
+        "width": 1060,
+        "height": 320
       }
     },
     {
@@ -186,7 +201,7 @@
       "typeVersion": 1,
       "position": [
         960,
-        0
+        100
       ],
       "parameters": {
         "sortFieldsUi": {
@@ -244,7 +259,7 @@
       "typeVersion": 3.4,
       "position": [
         1180,
-        240
+        220
       ],
       "parameters": {
         "assignments": {
@@ -261,8 +276,8 @@
       }
     },
     {
-      "id": "8f7f30ac-9ce1-5873-83d2-ce24581cd9ad",
-      "name": "Enviar resumo no WhatsApp",
+      "id": "084ead89-8638-5fc4-840b-3d8a0c3c705b",
+      "name": "Enviar resumo ao Rafael",
       "type": "n8n-nodes-base.executeWorkflow",
       "typeVersion": 1.3,
       "position": [
@@ -312,6 +327,166 @@
               "canBeUsedToMatch": true,
               "type": "string",
               "removed": true
+            }
+          ],
+          "attemptToConvertTypes": false,
+          "convertFieldsToString": true
+        },
+        "options": {}
+      }
+    },
+    {
+      "id": "6e0ba773-ad76-56de-af1d-8bd4fadbe5b1",
+      "name": "Formatar instalação para o técnico",
+      "type": "n8n-nodes-base.set",
+      "typeVersion": 3.4,
+      "position": [
+        1180,
+        540
+      ],
+      "parameters": {
+        "assignments": {
+          "assignments": [
+            {
+              "id": "3a80c65e-97df-5100-9b9b-c33317581349",
+              "name": "tecnico_nome",
+              "value": "={{ $json.tecnico_nome }}",
+              "type": "string"
+            },
+            {
+              "id": "c2b32dfd-db34-52ce-92d1-0be113c90c72",
+              "name": "tecnico_telefone",
+              "value": "={{ $json.tecnico_telefone }}",
+              "type": "string"
+            },
+            {
+              "id": "08f35e30-2047-5a62-93c8-54dff730a3ca",
+              "name": "linha",
+              "value": "=🕐 *{{ DateTime.fromISO($json.data_instalacao).setZone('America/Sao_Paulo').toFormat('HH:mm') }}* · {{ $json.cliente_nome }}\n📍 {{ $json.cliente_endereco }}\n🗺️ https://www.google.com/maps/search/?api=1&query={{ encodeURIComponent($json.cliente_endereco) }}\n📞 {{ $json.cliente_telefone.replace(/^55(\\d{2})(\\d{4,5})(\\d{4})$/, '($1) $2-$3') }}\n📦 {{ $json.itens_resumo }}{{ $json.observacoes ? '\\n📝 ' + $json.observacoes : '' }}",
+              "type": "string"
+            }
+          ]
+        },
+        "options": {}
+      }
+    },
+    {
+      "id": "59b6ab6c-6822-52b3-8d38-467c8b79e723",
+      "name": "Agrupar por técnico",
+      "type": "n8n-nodes-base.summarize",
+      "typeVersion": 1.1,
+      "position": [
+        1400,
+        540
+      ],
+      "parameters": {
+        "fieldsToSummarize": {
+          "values": [
+            {
+              "aggregation": "concatenate",
+              "field": "linha",
+              "separateBy": "other",
+              "customSeparator": "\n\n"
+            },
+            {
+              "aggregation": "count",
+              "field": "linha"
+            }
+          ]
+        },
+        "fieldsToSplitBy": "tecnico_nome, tecnico_telefone",
+        "options": {}
+      }
+    },
+    {
+      "id": "0228585c-2ec0-5af2-84a3-eb2a052d0974",
+      "name": "Montar agenda do técnico",
+      "type": "n8n-nodes-base.set",
+      "typeVersion": 3.4,
+      "position": [
+        1620,
+        540
+      ],
+      "parameters": {
+        "assignments": {
+          "assignments": [
+            {
+              "id": "c17e0d3d-ee2f-5e35-8c9b-f2cb1bf7a42b",
+              "name": "telefone",
+              "value": "={{ $json.tecnico_telefone }}",
+              "type": "string"
+            },
+            {
+              "id": "fc7755a9-6d59-5ed4-8f80-3c7d0eb02306",
+              "name": "destinatario",
+              "value": "={{ $json.tecnico_nome }} (técnico)",
+              "type": "string"
+            },
+            {
+              "id": "4e21bec2-df88-544e-9f18-fc873d4707e3",
+              "name": "mensagem",
+              "value": "=Olá, {{ $json.tecnico_nome.split(' ')[0] }}! 🔧\n\n*Sua agenda de amanhã ({{ $('Definir período de amanhã').first().json.data_label }}):*\n\n{{ $json.concatenated_linha }}\n\nTotal: {{ $json.count_linha }} {{ $json.count_linha === 1 ? 'instalação' : 'instalações' }}. Bom trabalho!\n\n_SmartLar_",
+              "type": "string"
+            }
+          ]
+        },
+        "options": {}
+      }
+    },
+    {
+      "id": "116b32e4-bc71-56c0-93bf-e0b9e39462f4",
+      "name": "Enviar agenda ao técnico",
+      "type": "n8n-nodes-base.executeWorkflow",
+      "typeVersion": 1.3,
+      "position": [
+        1840,
+        540
+      ],
+      "parameters": {
+        "workflowId": {
+          "__rl": true,
+          "value": "Z6Z4It2WacDz1cu3",
+          "mode": "list",
+          "cachedResultName": "SmartLar | [Sub] Enviar WhatsApp"
+        },
+        "workflowInputs": {
+          "mappingMode": "defineBelow",
+          "value": {
+            "mensagem": "={{ $json.mensagem }}",
+            "telefone": "={{ $json.telefone }}",
+            "destinatario": "={{ $json.destinatario }}"
+          },
+          "matchingColumns": [],
+          "schema": [
+            {
+              "id": "mensagem",
+              "displayName": "mensagem",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "canBeUsedToMatch": true,
+              "type": "string",
+              "removed": false
+            },
+            {
+              "id": "telefone",
+              "displayName": "telefone",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "canBeUsedToMatch": true,
+              "type": "string",
+              "removed": false
+            },
+            {
+              "id": "destinatario",
+              "displayName": "destinatario",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "canBeUsedToMatch": true,
+              "type": "string",
+              "removed": false
             }
           ],
           "attemptToConvertTypes": false,
@@ -380,6 +555,11 @@
             "node": "Agrupar em uma lista",
             "type": "main",
             "index": 0
+          },
+          {
+            "node": "Formatar instalação para o técnico",
+            "type": "main",
+            "index": 0
           }
         ]
       ]
@@ -399,7 +579,7 @@
       "main": [
         [
           {
-            "node": "Enviar resumo no WhatsApp",
+            "node": "Enviar resumo ao Rafael",
             "type": "main",
             "index": 0
           }
@@ -410,7 +590,40 @@
       "main": [
         [
           {
-            "node": "Enviar resumo no WhatsApp",
+            "node": "Enviar resumo ao Rafael",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Formatar instalação para o técnico": {
+      "main": [
+        [
+          {
+            "node": "Agrupar por técnico",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Agrupar por técnico": {
+      "main": [
+        [
+          {
+            "node": "Montar agenda do técnico",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Montar agenda do técnico": {
+      "main": [
+        [
+          {
+            "node": "Enviar agenda ao técnico",
             "type": "main",
             "index": 0
           }

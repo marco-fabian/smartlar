@@ -265,18 +265,23 @@ workflows['amanha'] = {
     'nodes': [
         nota('Sobre este workflow',
              '## 📋 Instalações de amanhã → WhatsApp\n'
-             '**Automação 2 (obrigatória).** Todo dia às 18h manda pro Rafael o resumo das instalações '
-             'do dia seguinte: horário, técnico, cliente e endereço.\n\n'
+             '**Automação 2 (obrigatória) + agenda dos técnicos.** Todo dia às 18h:\n'
+             '- o Rafael recebe o resumo de todas as instalações do dia seguinte (horário, técnico, cliente, endereço);\n'
+             '- **cada técnico recebe a própria agenda**, com endereço, link do Maps, telefone do cliente e o que instalar '
+             '(resolve *"os técnicos não sabem a agenda sem ligar pro Rafael"*).\n\n'
              '**Fuso:** America/Sao_Paulo. O banco guarda em UTC; a janela de "amanhã" é calculada em SP.\n'
-             '**Sem instalações:** manda um aviso mesmo assim, pra confirmar que a rotina rodou.\n'
+             '**Sem instalações:** o Rafael recebe um aviso mesmo assim, pra confirmar que a rotina rodou.\n'
              '**Falhas:** *[Erro] Alerta de falha*\n\n'
              f'`#smartlar` `#supabase` `#whatsapp` `#agendado` · `{VERSAO}`',
-             [-60, -440], 1820, 320, 6),
+             [-60, -480], 2200, 360, 6),
         nota('Etapa 1', '### 1. Consulta o banco\n'
                         'Pedidos `agendado` com `data_instalacao` de 00:00 até 23:59 de amanhã.\n'
                         '*Always Output Data* ligado na busca: sem resultado, o fluxo segue para o aviso.',
-             [-60, -100], 900, 520),
-        nota('Etapa 2', '### 2. Monta e envia o resumo', [860, -100], 900, 520),
+             [-60, -100], 900, 820),
+        nota('Etapa 2', '### 2. Resumo para o Rafael', [860, -100], 1000, 480),
+        nota('Etapa 3', '### 3. Agenda de cada técnico\n'
+                        'Uma linha por instalação → agrupa por técnico (*Summarize*) → uma mensagem por técnico.',
+             [1080, 400], 1060, 320),
         node('Todo dia às 18h', 'scheduleTrigger', 1.2, [0, 100],
              {'rule': {'interval': [{'field': 'days', 'triggerAtHour': 18}]}}),
         node('Definir período de amanhã', 'set', 3.4, [240, 100], campos(
@@ -292,7 +297,7 @@ workflows['amanha'] = {
                 {'keyName': 'data_instalacao', 'condition': 'lt', 'keyValue': '={{ $json.fim }}'}]}},
             credentials={'supabaseApi': credencial('supabase')}, alwaysOutputData=True),
         node('Tem instalação amanhã?', 'if', 2.2, [720, 100], condicoes(condicao('={{ $json.id }}', 'exists'))),
-        node('Ordenar por horário', 'sort', 1, [960, 0],
+        node('Ordenar por horário', 'sort', 1, [960, 100],
              {'sortFieldsUi': {'sortField': [{'fieldName': 'data_instalacao'}]}, 'options': {}}),
         node('Agrupar em uma lista', 'aggregate', 1, [1180, 0],
              {'aggregate': 'aggregateAllItemData', 'destinationFieldName': 'instalacoes', 'options': {}}),
@@ -302,10 +307,36 @@ workflows['amanha'] = {
             "{{ $json.instalacoes.map(i => '🕐 *' + " + HORA_SP.format('i.data_instalacao') + ".toFormat('HH:mm') + '* · ' + i.tecnico_nome"
             " + '\\n👤 ' + i.cliente_nome + '\\n📍 ' + i.cliente_endereco).join('\\n\\n') }}\n\n"
             "Total: {{ $json.instalacoes.length }} {{ $json.instalacoes.length === 1 ? 'instalação' : 'instalações' }}"))),
-        node('Montar aviso sem instalações', 'set', 3.4, [1180, 240], campos((
+        node('Montar aviso sem instalações', 'set', 3.4, [1180, 220], campos((
             'mensagem',
             '=📋 *Instalações de amanhã ({{ ' + PERIODO + ' }})*\n\nNenhuma instalação agendada. ✅'))),
-        enviar_whatsapp('Enviar resumo no WhatsApp', [1620, 100]),
+        enviar_whatsapp('Enviar resumo ao Rafael', [1620, 100]),
+        node('Formatar instalação para o técnico', 'set', 3.4, [1180, 540], campos(
+            ('tecnico_nome', '={{ $json.tecnico_nome }}'),
+            ('tecnico_telefone', '={{ $json.tecnico_telefone }}'),
+            ('linha',
+             "=🕐 *{{ " + HORA_SP.format('$json.data_instalacao') + ".toFormat('HH:mm') }}* · {{ $json.cliente_nome }}\n"
+             "📍 {{ $json.cliente_endereco }}\n"
+             "🗺️ https://www.google.com/maps/search/?api=1&query={{ encodeURIComponent($json.cliente_endereco) }}\n"
+             "📞 {{ " + TELEFONE + " }}\n"
+             "📦 {{ $json.itens_resumo }}"
+             "{{ $json.observacoes ? '\\n📝 ' + $json.observacoes : '' }}"))),
+        node('Agrupar por técnico', 'summarize', 1.1, [1400, 540], {
+            'fieldsToSummarize': {'values': [
+                {'aggregation': 'concatenate', 'field': 'linha', 'separateBy': 'other', 'customSeparator': '\n\n'},
+                {'aggregation': 'count', 'field': 'linha'}]},
+            'fieldsToSplitBy': 'tecnico_nome, tecnico_telefone',
+            'options': {}}),
+        node('Montar agenda do técnico', 'set', 3.4, [1620, 540], campos(
+            ('telefone', '={{ $json.tecnico_telefone }}'),
+            ('destinatario', '={{ $json.tecnico_nome }} (técnico)'),
+            ('mensagem',
+             "=Olá, {{ $json.tecnico_nome.split(' ')[0] }}! 🔧\n\n"
+             '*Sua agenda de amanhã ({{ ' + PERIODO + ' }}):*\n\n'
+             '{{ $json.concatenated_linha }}\n\n'
+             "Total: {{ $json.count_linha }} {{ $json.count_linha === 1 ? 'instalação' : 'instalações' }}. Bom trabalho!\n\n"
+             '_SmartLar_'))),
+        enviar_whatsapp('Enviar agenda ao técnico', [1840, 540], para_cliente=True),
     ],
     'connections': ligar(('Todo dia às 18h', 'Definir período de amanhã'),
                          ('Definir período de amanhã', 'Buscar instalações de amanhã'),
@@ -313,9 +344,13 @@ workflows['amanha'] = {
                          ('Tem instalação amanhã?', 'Ordenar por horário', 0),
                          ('Tem instalação amanhã?', 'Montar aviso sem instalações', 1),
                          ('Ordenar por horário', 'Agrupar em uma lista'),
+                         ('Ordenar por horário', 'Formatar instalação para o técnico'),
                          ('Agrupar em uma lista', 'Montar resumo do dia'),
-                         ('Montar resumo do dia', 'Enviar resumo no WhatsApp'),
-                         ('Montar aviso sem instalações', 'Enviar resumo no WhatsApp')),
+                         ('Montar resumo do dia', 'Enviar resumo ao Rafael'),
+                         ('Montar aviso sem instalações', 'Enviar resumo ao Rafael'),
+                         ('Formatar instalação para o técnico', 'Agrupar por técnico'),
+                         ('Agrupar por técnico', 'Montar agenda do técnico'),
+                         ('Montar agenda do técnico', 'Enviar agenda ao técnico')),
     'settings': configuracoes(),
 }
 

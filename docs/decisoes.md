@@ -98,6 +98,9 @@ Datas com Luxon nas expressões, filtros no nó do Supabase, IF para o caso "sem
 ### Cliente acompanha o pedido pelo WhatsApp
 Uma das dores do enunciado é "clientes ligam perguntando status", e nenhuma entrega obrigatória toca no cliente final. Um trigger em `pedidos` (`pedidos_notificar_status`) chama um workflow que manda ao cliente uma mensagem por etapa: aprovado, agendado (data, hora, técnico e endereço), em andamento e concluído. Reaproveita o gatilho via `pg_net`, a view `vw_pedidos` e o sub-workflow de WhatsApp: a mudança foi só a mensagem e o destino.
 
+### Técnico recebe a própria agenda
+Outra dor do enunciado: "os técnicos não sabem a agenda sem ligar pro Rafael". A tela de agenda não resolve sozinha, porque os técnicos não têm login. O workflow das 18h ganhou um segundo ramo: cada técnico recebe no WhatsApp as instalações dele de amanhã, com endereço, link do Google Maps, telefone do cliente, observações e o que instalar. O agrupamento por técnico é feito pelo nó *Summarize* (concatenar por técnico), sem código. A view `vw_pedidos` ganhou a coluna `itens_resumo` ("2× Câmera IP Wi-Fi, 1× Sensor de presença").
+
 ### Modo demonstração
 Os telefones do seed são fictícios, mas o formato é real e poderiam existir. O sub-workflow tem um modo demonstração (ligado): mensagens para clientes e técnicos vão para o grupo do Rafael com o aviso *[Para Fulano]*. Uma lista de números liberados (fora do repositório) recebe de verdade, para a demonstração ao vivo.
 
@@ -109,7 +112,6 @@ Os telefones do seed são fictícios, mas o formato é real e poderiam existir. 
 ## Limitações conhecidas / próximos passos
 - WhatsApp pela Evolution API (não oficial, risco de bloqueio do número). Em produção: API oficial da Meta (Cloud API).
 - Se o n8n estiver fora do ar, o `pg_net` registra a falha em `net._http_response` mas não reenvia. Com mais tempo: fila com retry (ou reprocessar pela tabela de respostas).
-- Os técnicos ainda não recebem a própria agenda no WhatsApp: o sub-workflow já aceita `telefone`, então seria um envio por técnico no resumo diário.
 - Um único perfil de acesso: técnicos não têm login próprio. Com mais tempo: papéis (admin/técnico) e RLS por técnico.
 - Categorias são uma lista fixa (`check`). Se o Rafael precisar criar categorias, viram tabela própria.
 - Sem controle de pagamento parcial/recebido: "a receber" é uma estimativa pelo status.

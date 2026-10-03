@@ -3,7 +3,7 @@
 | Workflow | Gatilho | O que faz |
 |---|---|---|
 | `SmartLar \| Novo pedido → WhatsApp` | Webhook ← trigger `pedidos_notificar_novo` | Avisa o Rafael de cada orçamento novo (cliente, valor, data) |
-| `SmartLar \| Instalações de amanhã → WhatsApp` | Todo dia às 18h (America/Sao_Paulo) | Resumo das instalações do dia seguinte; avisa também quando não há nenhuma |
+| `SmartLar \| Instalações de amanhã → WhatsApp` | Todo dia às 18h (America/Sao_Paulo) | Resumo das instalações do dia seguinte para o Rafael (avisa também quando não há nenhuma) e a agenda individual de cada técnico |
 | `SmartLar \| Pedido concluído → Faturamento (Sheets)` | Webhook ← trigger `pedidos_notificar_concluido` | Registra o faturamento na planilha *SmartLar · Faturamento* (bônus) |
 | `SmartLar \| Status do pedido → WhatsApp do cliente` | Webhook ← trigger `pedidos_notificar_status` | Avisa o cliente a cada etapa: aprovado, agendado, em andamento, concluído (além do escopo) |
 | `SmartLar \| [Sub] Enviar WhatsApp` | Chamado pelos outros | Único ponto de contato com a Evolution API, com modo demonstração |
