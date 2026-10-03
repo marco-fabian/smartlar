@@ -2,9 +2,16 @@
 
 Sistema para a **SmartLar**, empresa de automação residencial, parar de usar um caderninho e conversas soltas no WhatsApp como sistema: orçamentos, pedidos, agenda dos técnicos e faturamento num só lugar, e o WhatsApp usado do jeito certo, como canal de aviso para o dono, os técnicos e os clientes.
 
+<p align="center">
+  <a href="https://www.loom.com/share/697e05485a3a45c89045ed16cab8ef3e">
+    <img src="docs/img/video-apresentacao.gif" alt="Vídeo de apresentação do SmartLar" width="640">
+  </a>
+  <br>
+  <b>▶️ <a href="https://www.loom.com/share/697e05485a3a45c89045ed16cab8ef3e">Assista à apresentação (5 min)</a>:</b> o sistema funcionando de ponta a ponta, com as mensagens chegando no WhatsApp
+</p>
+
 |  |  |
 |---|---|
-| 🎬 **Vídeo de apresentação** | [Assistir no Loom](https://www.loom.com/share/697e05485a3a45c89045ed16cab8ef3e) |
 | 🌐 **Sistema no ar** | [smartlar.marcofabianufmg.workers.dev](https://smartlar.marcofabianufmg.workers.dev) (acesso enviado no documento de entrega) |
 | 🧠 **Decisões técnicas** | [docs/decisoes.md](docs/decisoes.md) |
 | ⚙️ **Automações** | [n8n/README.md](n8n/README.md) |
