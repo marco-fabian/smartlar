@@ -47,6 +47,42 @@ export type Database = {
         }
         Relationships: []
       }
+      eventos_n8n: {
+        Row: {
+          criado_em: string
+          enviado_em: string | null
+          id: number
+          payload: Json
+          proxima_tentativa: string
+          request_id: number | null
+          tentativas: number
+          ultimo_erro: string | null
+          webhook: string
+        }
+        Insert: {
+          criado_em?: string
+          enviado_em?: string | null
+          id?: never
+          payload: Json
+          proxima_tentativa?: string
+          request_id?: number | null
+          tentativas?: number
+          ultimo_erro?: string | null
+          webhook: string
+        }
+        Update: {
+          criado_em?: string
+          enviado_em?: string | null
+          id?: never
+          payload?: Json
+          proxima_tentativa?: string
+          request_id?: number | null
+          tentativas?: number
+          ultimo_erro?: string | null
+          webhook?: string
+        }
+        Relationships: []
+      }
       historico_status: {
         Row: {
           alterado_em: string
@@ -299,6 +335,7 @@ export type Database = {
           duracao_minutos: number | null
           forma_pagamento: Database["public"]["Enums"]["forma_pagamento"] | null
           id: string | null
+          itens: Json | null
           itens_resumo: string | null
           numero: number | null
           observacoes: string | null
@@ -353,6 +390,8 @@ export type Database = {
         }
       }
       dashboard_indicadores: { Args: never; Returns: Json }
+      enviar_evento_n8n: { Args: { p_evento_id: number }; Returns: undefined }
+      reprocessar_eventos_n8n: { Args: never; Returns: number }
     }
     Enums: {
       forma_pagamento:
