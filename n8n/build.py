@@ -13,7 +13,7 @@ IDS = json.loads((RAIZ / 'ids.json').read_text(encoding='utf-8'))
 
 TZ = 'America/Sao_Paulo'
 VERSAO = 'v1.0 · 02/10/2026'
-PLANILHA_ID = '13OkBYxolO4HRbwPhkv9juVr-3mBw1y6zMUE1yyPf33o'
+PLANILHA_ID = '1dP6mTmua0hU049ypz6i9Y7rUfY50n-AD2LXrdldlxeo'
 DESTINO_PADRAO = 'DESTINO_WHATSAPP'  # substituído no deploy por SMARTLAR_WHATSAPP_DESTINO
 
 
