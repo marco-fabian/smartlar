@@ -300,9 +300,9 @@
               "type": "boolean"
             },
             {
-              "id": "57773be6-726d-5fec-a434-ca3a0c33c10c",
+              "id": "2feebed0-67b7-5a35-8ccc-1f1aa5c07f7e",
               "name": "mensagem",
-              "value": "=Olá, {{ $json.cliente_nome.split(' ')[0] }}! 👋\n\nSeu pedido *#{{ $json.numero }}* foi *aprovado*. Obrigado pela confiança!\n\n🛒 *Itens do pedido*\n{{ ($json.itens || []).map(i => '• ' + i.quantidade + '× ' + i.produto + ' · ' + Number(i.subtotal).toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' })).join('\\n') }}\n\n💰 *Total: {{ Number($json.valor_total).toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' }) }}*\n\nEm breve entramos em contato para agendar a instalação.\n\n_Equipe SmartLar_",
+              "value": "=Olá, {{ $json.cliente_nome.split(' ')[0] }}! 👋\n\nRecebemos a sua *aprovação* do orçamento *#{{ $json.numero }}*. Obrigado pela confiança!\n\n🛒 *Itens do pedido*\n{{ ($json.itens || []).map(i => '• ' + i.quantidade + '× ' + i.produto + ' · ' + Number(i.subtotal).toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' })).join('\\n') }}\n\n💰 *Total: {{ Number($json.valor_total).toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' }) }}*\n\nEm breve entramos em contato para agendar a instalação.\n\n_Equipe SmartLar_",
               "type": "string"
             }
           ]

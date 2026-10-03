@@ -101,6 +101,7 @@ Pensado para funcionar no celular: o técnico usa a agenda em campo.
 | Quando | O que acontece | Quem recebe |
 |---|---|---|
 | 🆕 Orçamento criado | Aviso com cliente, itens, total e data | Rafael |
+| 🧾 Orçamento criado | O orçamento com itens e total, para aprovar respondendo a mensagem | Cliente que autorizou |
 | 📣 Pedido muda de etapa | Mensagem da etapa (aprovado, agendado, em andamento, concluído) | Cliente que autorizou |
 | 💰 Pedido concluído | Linha na planilha de faturamento (sem duplicar) | Google Sheets |
 | ⏰ Todo dia às 9h | Orçamentos parados há 3+ dias, com link de follow-up | Rafael |

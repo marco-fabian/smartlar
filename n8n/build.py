@@ -222,25 +222,29 @@ workflows['novo_pedido'] = {
     'nodes': [
         nota('Sobre este workflow',
              '## 🆕 Novo pedido → WhatsApp\n'
-             '**Automação 1 (obrigatória).** Avisa o Rafael no WhatsApp sempre que um orçamento é criado.\n\n'
+             '**Automação 1 (obrigatória).** Avisa o Rafael no WhatsApp sempre que um orçamento é criado, '
+             'e manda o orçamento para o cliente que autorizou o WhatsApp.\n\n'
              '**Gatilho:** trigger `pedidos_notificar_novo` no Supabase (pg_net) → webhook autenticado pelo header `X-Webhook-Secret`\n'
-             '**Destino:** WhatsApp do Rafael, via *[Sub] Enviar WhatsApp*\n'
+             '**Destino:** grupo do Rafael e WhatsApp do cliente (se autorizou), via *[Sub] Enviar WhatsApp*\n'
              '**Falhas:** *[Erro] Alerta de falha*\n\n'
              f'`#smartlar` `#supabase` `#whatsapp` · `{VERSAO}`',
              [-60, -420], 1260, 300, 6),
         nota('Etapa 1', '### 1. Recebe o evento\nSó segue se for INSERT de pedido em `orcamento`.',
-             [-60, -100], 460, 320),
+             [-60, -100], 460, 520),
         nota('Etapa 2', '### 2. Busca os dados atualizados\n'
                         'O evento chega com `valor_total = 0` (os itens entram depois, na mesma transação). '
                         'Por isso o pedido é consultado de novo na view `vw_pedidos`, já com cliente e total.',
-             [420, -100], 280, 320),
-        nota('Etapa 3', '### 3. Notifica', [720, -100], 480, 320),
+             [420, -100], 280, 520),
+        nota('Etapa 3', '### 3. Notifica\n'
+                        'O Rafael recebe o aviso no grupo. O cliente recebe o orçamento para aprovar, '
+                        'se autorizou o WhatsApp no cadastro.',
+             [720, -100], 480, 520),
         webhook('Pedido criado (Supabase)', 'smartlar/novo-pedido', [0, 60]),
         node('É um orçamento novo?', 'filter', 2.2, [220, 60], condicoes(
             condicao('={{ $json.body.type }}', 'equals', 'INSERT'),
             condicao('={{ $json.body.record.status }}', 'equals', 'orcamento'))),
         buscar_pedido('Buscar pedido completo', [480, 60]),
-        node('Montar mensagem', 'set', 3.4, [780, 60], campos((
+        node('Montar aviso ao Rafael', 'set', 3.4, [780, 60], campos((
             'mensagem',
             '=🆕 *Novo orçamento #{{ $json.numero }}*\n\n'
             '👤 {{ $json.cliente_nome }}\n'
@@ -250,12 +254,27 @@ workflows['novo_pedido'] = {
             '💰 *Total: {{ ' + VALOR + ' }}*\n'
             '📅 {{ ' + HORA_SP.format('$json.created_at') + '.toFormat("dd/MM/yyyy \'às\' HH:mm") }}'
             "{{ $json.observacoes ? '\\n📝 ' + $json.observacoes : '' }}"))),
-        enviar_whatsapp('Enviar no WhatsApp', [1000, 60]),
+        enviar_whatsapp('Enviar aviso ao Rafael', [1000, 60]),
+        node('Montar orçamento para o cliente', 'set', 3.4, [780, 260], campos(
+            ('telefone', '={{ $json.cliente_telefone }}'),
+            ('destinatario', '={{ $json.cliente_nome }}'),
+            ('whatsapp_autorizado', '={{ $json.cliente_notificar_whatsapp }}', 'boolean'),
+            ('mensagem',
+             "=Olá, {{ $json.cliente_nome.split(' ')[0] }}! 👋\n\n"
+             'Segue o seu orçamento *#{{ $json.numero }}* da SmartLar:\n\n'
+             '🛒 *Itens*\n'
+             '{{ ' + ITENS + ' }}\n\n'
+             '💰 *Total: {{ ' + VALOR + ' }}*\n\n'
+             'Para aprovar, é só responder esta mensagem.\n\n'
+             '_Equipe SmartLar_'))),
+        enviar_whatsapp('Enviar orçamento ao cliente', [1000, 260], para_cliente=True),
     ],
     'connections': ligar(('Pedido criado (Supabase)', 'É um orçamento novo?'),
                          ('É um orçamento novo?', 'Buscar pedido completo'),
-                         ('Buscar pedido completo', 'Montar mensagem'),
-                         ('Montar mensagem', 'Enviar no WhatsApp')),
+                         ('Buscar pedido completo', 'Montar aviso ao Rafael'),
+                         ('Montar aviso ao Rafael', 'Enviar aviso ao Rafael'),
+                         ('Buscar pedido completo', 'Montar orçamento para o cliente'),
+                         ('Montar orçamento para o cliente', 'Enviar orçamento ao cliente')),
     'settings': configuracoes(),
 }
 
@@ -457,7 +476,7 @@ workflows['status_cliente'] = {
               'options': {}}),
         mensagem_cliente('Mensagem: aprovado', [960, 40],
             '=Olá, {{ ' + PRIMEIRO_NOME + ' }}! 👋\n\n'
-            'Seu pedido *#{{ $json.numero }}* foi *aprovado*. Obrigado pela confiança!\n\n'
+            'Recebemos a sua *aprovação* do orçamento *#{{ $json.numero }}*. Obrigado pela confiança!\n\n'
             '🛒 *Itens do pedido*\n'
             '{{ ' + ITENS + ' }}\n\n'
             '💰 *Total: {{ ' + VALOR + ' }}*\n\n'

@@ -11,7 +11,7 @@
         -420
       ],
       "parameters": {
-        "content": "## 🆕 Novo pedido → WhatsApp\n**Automação 1 (obrigatória).** Avisa o Rafael no WhatsApp sempre que um orçamento é criado.\n\n**Gatilho:** trigger `pedidos_notificar_novo` no Supabase (pg_net) → webhook autenticado pelo header `X-Webhook-Secret`\n**Destino:** WhatsApp do Rafael, via *[Sub] Enviar WhatsApp*\n**Falhas:** *[Erro] Alerta de falha*\n\n`#smartlar` `#supabase` `#whatsapp` · `v1.0 · 02/10/2026`",
+        "content": "## 🆕 Novo pedido → WhatsApp\n**Automação 1 (obrigatória).** Avisa o Rafael no WhatsApp sempre que um orçamento é criado, e manda o orçamento para o cliente que autorizou o WhatsApp.\n\n**Gatilho:** trigger `pedidos_notificar_novo` no Supabase (pg_net) → webhook autenticado pelo header `X-Webhook-Secret`\n**Destino:** grupo do Rafael e WhatsApp do cliente (se autorizou), via *[Sub] Enviar WhatsApp*\n**Falhas:** *[Erro] Alerta de falha*\n\n`#smartlar` `#supabase` `#whatsapp` · `v1.0 · 02/10/2026`",
         "width": 1260,
         "height": 300,
         "color": 6
@@ -29,7 +29,7 @@
       "parameters": {
         "content": "### 1. Recebe o evento\nSó segue se for INSERT de pedido em `orcamento`.",
         "width": 460,
-        "height": 320
+        "height": 520
       }
     },
     {
@@ -44,7 +44,7 @@
       "parameters": {
         "content": "### 2. Busca os dados atualizados\nO evento chega com `valor_total = 0` (os itens entram depois, na mesma transação). Por isso o pedido é consultado de novo na view `vw_pedidos`, já com cliente e total.",
         "width": 280,
-        "height": 320
+        "height": 520
       }
     },
     {
@@ -57,9 +57,9 @@
         -100
       ],
       "parameters": {
-        "content": "### 3. Notifica",
+        "content": "### 3. Notifica\nO Rafael recebe o aviso no grupo. O cliente recebe o orçamento para aprovar, se autorizou o WhatsApp no cadastro.",
         "width": 480,
-        "height": 320
+        "height": 520
       }
     },
     {
@@ -156,8 +156,8 @@
       }
     },
     {
-      "id": "7ccf101b-3aea-516e-9793-e913614d9922",
-      "name": "Montar mensagem",
+      "id": "31540e15-0804-5e22-ba19-fb266af81ea5",
+      "name": "Montar aviso ao Rafael",
       "type": "n8n-nodes-base.set",
       "typeVersion": 3.4,
       "position": [
@@ -179,8 +179,8 @@
       }
     },
     {
-      "id": "793362b8-15d3-5436-b177-93768b14af73",
-      "name": "Enviar no WhatsApp",
+      "id": "39ffed84-b065-574d-bce0-91bf0c85a46c",
+      "name": "Enviar aviso ao Rafael",
       "type": "n8n-nodes-base.executeWorkflow",
       "typeVersion": 1.3,
       "position": [
@@ -247,6 +247,120 @@
         },
         "options": {}
       }
+    },
+    {
+      "id": "45089d0e-eacc-5a6e-a01f-f6ab692e6d59",
+      "name": "Montar orçamento para o cliente",
+      "type": "n8n-nodes-base.set",
+      "typeVersion": 3.4,
+      "position": [
+        780,
+        260
+      ],
+      "parameters": {
+        "assignments": {
+          "assignments": [
+            {
+              "id": "acce0bdd-4cdf-5ca1-a688-ac0c4cbed62f",
+              "name": "telefone",
+              "value": "={{ $json.cliente_telefone }}",
+              "type": "string"
+            },
+            {
+              "id": "b8696dc8-5310-52d7-bedd-efe126addd6d",
+              "name": "destinatario",
+              "value": "={{ $json.cliente_nome }}",
+              "type": "string"
+            },
+            {
+              "id": "1693e2b8-95d0-5648-8310-3d7389052c85",
+              "name": "whatsapp_autorizado",
+              "value": "={{ $json.cliente_notificar_whatsapp }}",
+              "type": "boolean"
+            },
+            {
+              "id": "425cb550-65f5-5577-919d-cabe5e1a7e94",
+              "name": "mensagem",
+              "value": "=Olá, {{ $json.cliente_nome.split(' ')[0] }}! 👋\n\nSegue o seu orçamento *#{{ $json.numero }}* da SmartLar:\n\n🛒 *Itens*\n{{ ($json.itens || []).map(i => '• ' + i.quantidade + '× ' + i.produto + ' · ' + Number(i.subtotal).toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' })).join('\\n') }}\n\n💰 *Total: {{ Number($json.valor_total).toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' }) }}*\n\nPara aprovar, é só responder esta mensagem.\n\n_Equipe SmartLar_",
+              "type": "string"
+            }
+          ]
+        },
+        "options": {}
+      }
+    },
+    {
+      "id": "b7b4dde9-618f-58d7-94f6-fa2f9061ed91",
+      "name": "Enviar orçamento ao cliente",
+      "type": "n8n-nodes-base.executeWorkflow",
+      "typeVersion": 1.3,
+      "position": [
+        1000,
+        260
+      ],
+      "parameters": {
+        "workflowId": {
+          "__rl": true,
+          "value": "Z6Z4It2WacDz1cu3",
+          "mode": "list",
+          "cachedResultName": "SmartLar | [Sub] Enviar WhatsApp"
+        },
+        "workflowInputs": {
+          "mappingMode": "defineBelow",
+          "value": {
+            "mensagem": "={{ $json.mensagem }}",
+            "telefone": "={{ $json.telefone }}",
+            "destinatario": "={{ $json.destinatario }}",
+            "whatsapp_autorizado": "={{ String($json.whatsapp_autorizado ?? false) }}"
+          },
+          "matchingColumns": [],
+          "schema": [
+            {
+              "id": "mensagem",
+              "displayName": "mensagem",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "canBeUsedToMatch": true,
+              "type": "string",
+              "removed": false
+            },
+            {
+              "id": "telefone",
+              "displayName": "telefone",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "canBeUsedToMatch": true,
+              "type": "string",
+              "removed": false
+            },
+            {
+              "id": "destinatario",
+              "displayName": "destinatario",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "canBeUsedToMatch": true,
+              "type": "string",
+              "removed": false
+            },
+            {
+              "id": "whatsapp_autorizado",
+              "displayName": "whatsapp_autorizado",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "canBeUsedToMatch": true,
+              "type": "string",
+              "removed": false
+            }
+          ],
+          "attemptToConvertTypes": false,
+          "convertFieldsToString": true
+        },
+        "options": {}
+      }
     }
   ],
   "connections": {
@@ -276,18 +390,34 @@
       "main": [
         [
           {
-            "node": "Montar mensagem",
+            "node": "Montar aviso ao Rafael",
+            "type": "main",
+            "index": 0
+          },
+          {
+            "node": "Montar orçamento para o cliente",
             "type": "main",
             "index": 0
           }
         ]
       ]
     },
-    "Montar mensagem": {
+    "Montar aviso ao Rafael": {
       "main": [
         [
           {
-            "node": "Enviar no WhatsApp",
+            "node": "Enviar aviso ao Rafael",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Montar orçamento para o cliente": {
+      "main": [
+        [
+          {
+            "node": "Enviar orçamento ao cliente",
             "type": "main",
             "index": 0
           }
