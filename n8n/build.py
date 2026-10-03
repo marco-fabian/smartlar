@@ -119,6 +119,9 @@ def configuracoes(alerta_de_erro=True):
 
 TELEFONE = r"$json.cliente_telefone.replace(/^55(\d{2})(\d{4,5})(\d{4})$/, '($1) $2-$3')"
 VALOR = "Number($json.valor_total).toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' })"
+# Uma linha por item: "• 2× Câmera IP Wi-Fi · R$ 900,00"
+ITENS = ("($json.itens || []).map(i => '• ' + i.quantidade + '× ' + i.produto + ' · ' + "
+         "Number(i.subtotal).toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' })).join('\\n')")
 HORA_SP = "DateTime.fromISO({}).setZone('America/Sao_Paulo')"
 # Fim previsto da instalação (início + duracao_minutos)
 FIM_SP = "DateTime.fromISO($json.data_instalacao).setZone('America/Sao_Paulo').plus({ minutes: $json.duracao_minutos }).toFormat('HH:mm')"
@@ -241,8 +244,10 @@ workflows['novo_pedido'] = {
             'mensagem',
             '=🆕 *Novo orçamento #{{ $json.numero }}*\n\n'
             '👤 {{ $json.cliente_nome }}\n'
-            '📞 {{ ' + TELEFONE + ' }}\n'
-            '💰 {{ ' + VALOR + ' }}\n'
+            '📞 {{ ' + TELEFONE + ' }}\n\n'
+            '🛒 *Itens*\n'
+            '{{ ' + ITENS + ' }}\n\n'
+            '💰 *Total: {{ ' + VALOR + ' }}*\n'
             '📅 {{ ' + HORA_SP.format('$json.created_at') + '.toFormat("dd/MM/yyyy \'às\' HH:mm") }}'
             "{{ $json.observacoes ? '\\n📝 ' + $json.observacoes : '' }}"))),
         enviar_whatsapp('Enviar no WhatsApp', [1000, 60]),
@@ -453,7 +458,9 @@ workflows['status_cliente'] = {
         mensagem_cliente('Mensagem: aprovado', [960, 40],
             '=Olá, {{ ' + PRIMEIRO_NOME + ' }}! 👋\n\n'
             'Seu pedido *#{{ $json.numero }}* foi *aprovado*. Obrigado pela confiança!\n\n'
-            '💰 {{ ' + VALOR + ' }}\n\n'
+            '🛒 *Itens do pedido*\n'
+            '{{ ' + ITENS + ' }}\n\n'
+            '💰 *Total: {{ ' + VALOR + ' }}*\n\n'
             'Em breve entramos em contato para agendar a instalação.'),
         mensagem_cliente('Mensagem: agendado', [960, 220],
             '=Olá, {{ ' + PRIMEIRO_NOME + ' }}! 📅\n\n'

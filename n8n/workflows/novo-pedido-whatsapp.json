@@ -168,9 +168,9 @@
         "assignments": {
           "assignments": [
             {
-              "id": "b7f5af16-7232-5aba-9cb4-3ab5a3a6e880",
+              "id": "ef9ebe9c-5036-5dae-8768-8cafeae7505b",
               "name": "mensagem",
-              "value": "=🆕 *Novo orçamento #{{ $json.numero }}*\n\n👤 {{ $json.cliente_nome }}\n📞 {{ $json.cliente_telefone.replace(/^55(\\d{2})(\\d{4,5})(\\d{4})$/, '($1) $2-$3') }}\n💰 {{ Number($json.valor_total).toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' }) }}\n📅 {{ DateTime.fromISO($json.created_at).setZone('America/Sao_Paulo').toFormat(\"dd/MM/yyyy 'às' HH:mm\") }}{{ $json.observacoes ? '\\n📝 ' + $json.observacoes : '' }}",
+              "value": "=🆕 *Novo orçamento #{{ $json.numero }}*\n\n👤 {{ $json.cliente_nome }}\n📞 {{ $json.cliente_telefone.replace(/^55(\\d{2})(\\d{4,5})(\\d{4})$/, '($1) $2-$3') }}\n\n🛒 *Itens*\n{{ ($json.itens || []).map(i => '• ' + i.quantidade + '× ' + i.produto + ' · ' + Number(i.subtotal).toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' })).join('\\n') }}\n\n💰 *Total: {{ Number($json.valor_total).toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' }) }}*\n📅 {{ DateTime.fromISO($json.created_at).setZone('America/Sao_Paulo').toFormat(\"dd/MM/yyyy 'às' HH:mm\") }}{{ $json.observacoes ? '\\n📝 ' + $json.observacoes : '' }}",
               "type": "string"
             }
           ]
