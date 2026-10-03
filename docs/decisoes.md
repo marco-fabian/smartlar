@@ -24,6 +24,9 @@ Cálculo de valores, fluxo de status e validações ficam em constraints e trigg
 - `agendado` em diante exige técnico e data de instalação.
 - `concluido_em` é preenchido automaticamente; é a base do "faturado no mês" (o mês em que concluiu, não o mês em que o orçamento foi criado).
 
+### Conflito de agenda do técnico
+Cada pedido tem `duracao_minutos` (padrão 2h, de 30 min a 8h, escolhida ao agendar). Um trigger impede que o mesmo técnico fique com duas instalações agendadas ou em andamento que se sobreponham, e devolve uma mensagem clara ("Lucas já tem a instalação #6 de 03/10 14:00 até 16:00"). Os intervalos são semiabertos: uma instalação pode começar no minuto em que a anterior termina. Usei trigger em vez de exclusion constraint porque somar um intervalo a um `timestamptz` não é uma expressão imutável, e o Postgres não aceita isso em índice.
+
 ### Campos extras
 - `pedidos.numero`: sequencial legível ("Pedido #12") pro Rafael e pros clientes, em vez de UUID.
 - `pedidos.data_instalacao` é `timestamptz` (data + hora), porque o alerta de instalação precisa do horário.

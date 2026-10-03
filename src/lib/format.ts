@@ -36,6 +36,16 @@ export function formatHora(iso: string) {
   return new Date(iso).toLocaleTimeString("pt-BR", { timeZone: TZ, hour: "2-digit", minute: "2-digit" })
 }
 
+// Horário de término da instalação: início + duração
+export function formatFim(iso: string, minutos: number | null | undefined) {
+  return formatHora(new Date(new Date(iso).getTime() + (minutos ?? 120) * 60000).toISOString())
+}
+
+// Início e fim da instalação: "14:00–16:00"
+export function formatIntervalo(iso: string, minutos: number | null | undefined) {
+  return `${formatHora(iso)}–${formatFim(iso, minutos)}`
+}
+
 // 5511987654321 -> (11) 98765-4321
 export function formatTelefone(tel: string | null | undefined) {
   if (!tel) return "—"

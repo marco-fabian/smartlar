@@ -120,6 +120,8 @@ def configuracoes(alerta_de_erro=True):
 TELEFONE = r"$json.cliente_telefone.replace(/^55(\d{2})(\d{4,5})(\d{4})$/, '($1) $2-$3')"
 VALOR = "Number($json.valor_total).toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' })"
 HORA_SP = "DateTime.fromISO({}).setZone('America/Sao_Paulo')"
+# Fim previsto da instalação (início + duracao_minutos)
+FIM_SP = "DateTime.fromISO($json.data_instalacao).setZone('America/Sao_Paulo').plus({ minutes: $json.duracao_minutos }).toFormat('HH:mm')"
 
 workflows = {}
 
@@ -315,7 +317,7 @@ workflows['amanha'] = {
             ('tecnico_nome', '={{ $json.tecnico_nome }}'),
             ('tecnico_telefone', '={{ $json.tecnico_telefone }}'),
             ('linha',
-             "=🕐 *{{ " + HORA_SP.format('$json.data_instalacao') + ".toFormat('HH:mm') }}* · {{ $json.cliente_nome }}\n"
+             "=🕐 *{{ " + HORA_SP.format('$json.data_instalacao') + ".toFormat('HH:mm') }} às {{ " + FIM_SP + " }}* · {{ $json.cliente_nome }}\n"
              "📍 {{ $json.cliente_endereco }}\n"
              "🗺️ https://www.google.com/maps/search/?api=1&query={{ encodeURIComponent($json.cliente_endereco) }}\n"
              "📞 {{ " + TELEFONE + " }}\n"
@@ -458,7 +460,8 @@ workflows['status_cliente'] = {
         mensagem_cliente('Mensagem: agendado', [960, 220],
             '=Olá, {{ ' + PRIMEIRO_NOME + ' }}! 📅\n\n'
             'Sua instalação está *agendada*:\n\n'
-            "🗓️ {{ " + HORA_SP.format('$json.data_instalacao') + ".setLocale('pt-BR').toFormat(\"cccc, dd/MM 'às' HH:mm\") }}\n"
+            "🗓️ {{ " + HORA_SP.format('$json.data_instalacao') + ".setLocale('pt-BR').toFormat('cccc, dd/MM') }}, "
+            "das {{ " + HORA_SP.format('$json.data_instalacao') + ".toFormat('HH:mm') }} às {{ " + FIM_SP + " }} (previsão)\n"
             '🔧 Técnico: {{ $json.tecnico_nome }}\n'
             '📍 {{ $json.cliente_endereco }}\n\n'
             'Precisa remarcar? É só responder esta mensagem.'),

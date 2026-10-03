@@ -360,9 +360,9 @@
               "type": "string"
             },
             {
-              "id": "08f35e30-2047-5a62-93c8-54dff730a3ca",
+              "id": "f2e32bfc-54f9-5d2f-a6c3-f20eae895941",
               "name": "linha",
-              "value": "=🕐 *{{ DateTime.fromISO($json.data_instalacao).setZone('America/Sao_Paulo').toFormat('HH:mm') }}* · {{ $json.cliente_nome }}\n📍 {{ $json.cliente_endereco }}\n🗺️ https://www.google.com/maps/search/?api=1&query={{ encodeURIComponent($json.cliente_endereco) }}\n📞 {{ $json.cliente_telefone.replace(/^55(\\d{2})(\\d{4,5})(\\d{4})$/, '($1) $2-$3') }}\n📦 {{ $json.itens_resumo }}{{ $json.observacoes ? '\\n📝 ' + $json.observacoes : '' }}",
+              "value": "=🕐 *{{ DateTime.fromISO($json.data_instalacao).setZone('America/Sao_Paulo').toFormat('HH:mm') }} às {{ DateTime.fromISO($json.data_instalacao).setZone('America/Sao_Paulo').plus({ minutes: $json.duracao_minutos }).toFormat('HH:mm') }}* · {{ $json.cliente_nome }}\n📍 {{ $json.cliente_endereco }}\n🗺️ https://www.google.com/maps/search/?api=1&query={{ encodeURIComponent($json.cliente_endereco) }}\n📞 {{ $json.cliente_telefone.replace(/^55(\\d{2})(\\d{4,5})(\\d{4})$/, '($1) $2-$3') }}\n📦 {{ $json.itens_resumo }}{{ $json.observacoes ? '\\n📝 ' + $json.observacoes : '' }}",
               "type": "string"
             }
           ]

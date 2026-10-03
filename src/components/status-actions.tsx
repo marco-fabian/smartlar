@@ -29,6 +29,15 @@ async function tentar(promessa: Promise<unknown>) {
   }
 }
 
+const DURACOES = [
+  ["60", "1 hora"],
+  ["90", "1h30"],
+  ["120", "2 horas"],
+  ["180", "3 horas"],
+  ["240", "4 horas"],
+  ["480", "Dia inteiro (8 horas)"],
+]
+
 // ISO (UTC) -> valor de <input type="datetime-local"> no horário local
 function paraInputLocal(iso: string | null) {
   if (!iso) return ""
@@ -85,18 +94,21 @@ function AgendarDialog({ pedido, onClose }: { pedido: PedidoView; onClose: () =>
   const { data: tecnicos } = useTecnicos()
   const [tecnicoId, setTecnicoId] = useState(pedido.tecnico_id ?? "")
   const [data, setData] = useState(paraInputLocal(pedido.data_instalacao))
+  const [duracao, setDuracao] = useState(String(pedido.duracao_minutos ?? 120))
   const [agora] = useState(() => paraInputLocal(new Date().toISOString()))
 
   async function enviar(e: FormEvent) {
     e.preventDefault()
     if (!tecnicoId || !data) return
     if (data < agora) return toast.error("A data da instalação não pode estar no passado.")
+    // Conflito com outra instalação do mesmo técnico é barrado pelo banco e aparece no toast
     const ok = await tentar(
       alterar.mutateAsync({
         id: pedido.id!,
         status: "agendado",
         tecnico_id: tecnicoId,
         data_instalacao: new Date(data).toISOString(),
+        duracao_minutos: Number(duracao),
       }),
     )
     if (!ok) return
@@ -133,6 +145,21 @@ function AgendarDialog({ pedido, onClose }: { pedido: PedidoView; onClose: () =>
             <Label htmlFor="data-instalacao">Data e horário *</Label>
             <Input id="data-instalacao" type="datetime-local" min={agora} value={data}
               onChange={(e) => setData(e.target.value)} />
+          </div>
+          <div className="grid gap-2">
+            <Label>Duração estimada *</Label>
+            <Select value={duracao} onValueChange={setDuracao}>
+              <SelectTrigger className="w-full">
+                <SelectValue />
+              </SelectTrigger>
+              <SelectContent>
+                {DURACOES.map(([minutos, label]) => (
+                  <SelectItem key={minutos} value={minutos}>
+                    {label}
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
           </div>
           <Button type="submit" disabled={!tecnicoId || !data || alterar.isPending}>
             Agendar

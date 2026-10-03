@@ -329,9 +329,9 @@
               "type": "string"
             },
             {
-              "id": "54e1fc32-39cc-584b-b49f-7658eda566d3",
+              "id": "9bb000d3-210b-5441-b9ae-6af04fbbf6de",
               "name": "mensagem",
-              "value": "=Olá, {{ $json.cliente_nome.split(' ')[0] }}! 📅\n\nSua instalação está *agendada*:\n\n🗓️ {{ DateTime.fromISO($json.data_instalacao).setZone('America/Sao_Paulo').setLocale('pt-BR').toFormat(\"cccc, dd/MM 'às' HH:mm\") }}\n🔧 Técnico: {{ $json.tecnico_nome }}\n📍 {{ $json.cliente_endereco }}\n\nPrecisa remarcar? É só responder esta mensagem.\n\n_Equipe SmartLar_",
+              "value": "=Olá, {{ $json.cliente_nome.split(' ')[0] }}! 📅\n\nSua instalação está *agendada*:\n\n🗓️ {{ DateTime.fromISO($json.data_instalacao).setZone('America/Sao_Paulo').setLocale('pt-BR').toFormat('cccc, dd/MM') }}, das {{ DateTime.fromISO($json.data_instalacao).setZone('America/Sao_Paulo').toFormat('HH:mm') }} às {{ DateTime.fromISO($json.data_instalacao).setZone('America/Sao_Paulo').plus({ minutes: $json.duracao_minutos }).toFormat('HH:mm') }} (previsão)\n🔧 Técnico: {{ $json.tecnico_nome }}\n📍 {{ $json.cliente_endereco }}\n\nPrecisa remarcar? É só responder esta mensagem.\n\n_Equipe SmartLar_",
               "type": "string"
             }
           ]

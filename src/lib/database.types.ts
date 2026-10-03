@@ -144,6 +144,7 @@ export type Database = {
           concluido_em: string | null
           created_at: string
           data_instalacao: string | null
+          duracao_minutos: number
           forma_pagamento: Database["public"]["Enums"]["forma_pagamento"] | null
           id: string
           numero: number
@@ -158,6 +159,7 @@ export type Database = {
           concluido_em?: string | null
           created_at?: string
           data_instalacao?: string | null
+          duracao_minutos?: number
           forma_pagamento?:
             | Database["public"]["Enums"]["forma_pagamento"]
             | null
@@ -174,6 +176,7 @@ export type Database = {
           concluido_em?: string | null
           created_at?: string
           data_instalacao?: string | null
+          duracao_minutos?: number
           forma_pagamento?:
             | Database["public"]["Enums"]["forma_pagamento"]
             | null
@@ -289,6 +292,7 @@ export type Database = {
           concluido_em: string | null
           created_at: string | null
           data_instalacao: string | null
+          duracao_minutos: number | null
           forma_pagamento: Database["public"]["Enums"]["forma_pagamento"] | null
           id: string | null
           itens_resumo: string | null
@@ -327,6 +331,7 @@ export type Database = {
           concluido_em: string | null
           created_at: string
           data_instalacao: string | null
+          duracao_minutos: number
           forma_pagamento: Database["public"]["Enums"]["forma_pagamento"] | null
           id: string
           numero: number

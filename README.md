@@ -175,6 +175,7 @@ erDiagram
 - 🧮 `subtotal = quantidade × preço` (coluna gerada) e `valor_total` = soma dos itens (trigger). Escrever o total na mão é bloqueado.
 - 🏷️ O preço do item é **congelado** no momento do pedido.
 - 🚦 Só transições de status válidas; aprovado exige forma de pagamento; agendado exige técnico e data.
+- 📅 O mesmo técnico não pode ter duas instalações no mesmo horário (cada instalação tem duração estimada).
 - 🔒 Itens só mudam enquanto o pedido é orçamento.
 - 🕓 Cada mudança de status fica no `historico_status`.
 - 🔐 RLS: só usuário logado acessa os dados.

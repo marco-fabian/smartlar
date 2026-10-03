@@ -7,7 +7,7 @@ import { StatusBadge } from "@/components/status-badge"
 import { Card, CardContent } from "@/components/ui/card"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
 import { Skeleton } from "@/components/ui/skeleton"
-import { formatHora, formatTelefone } from "@/lib/format"
+import { formatFim, formatHora, formatTelefone } from "@/lib/format"
 import { useItensPedidos, usePedidos, useTecnicos } from "@/lib/queries"
 import type { PedidoView } from "@/lib/types"
 
@@ -76,6 +76,7 @@ export function AgendaPage() {
                   <CardContent className="grid gap-4 sm:grid-cols-[80px_1fr_auto]">
                     <div>
                       <div className="text-xl font-semibold tabular-nums">{formatHora(p.data_instalacao!)}</div>
+                      <div className="mb-1 text-xs text-muted-foreground tabular-nums">até {formatFim(p.data_instalacao!, p.duracao_minutos)}</div>
                       <StatusBadge status={p.status} />
                     </div>
                     <div className="grid min-w-0 gap-1.5 text-sm">

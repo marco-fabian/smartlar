@@ -5,7 +5,7 @@ import { PageHeader } from "@/components/page-header"
 import { Badge } from "@/components/ui/badge"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import { Skeleton } from "@/components/ui/skeleton"
-import { formatBRL, formatData, formatDiaSemana, formatHora } from "@/lib/format"
+import { formatBRL, formatData, formatDiaSemana, formatIntervalo } from "@/lib/format"
 import { useIndicadores, usePedidos } from "@/lib/queries"
 
 const DIA_MS = 24 * 60 * 60 * 1000
@@ -76,7 +76,7 @@ export function DashboardPage() {
                 className="flex gap-3 rounded-lg border p-3 text-sm transition-colors hover:bg-muted/50">
                 <div className="w-20 shrink-0">
                   <div className="font-medium capitalize">{formatDiaSemana(p.data_instalacao!)}</div>
-                  <div className="text-muted-foreground">{formatHora(p.data_instalacao!)}</div>
+                  <div className="text-muted-foreground tabular-nums">{formatIntervalo(p.data_instalacao!, p.duracao_minutos)}</div>
                 </div>
                 <div className="min-w-0 flex-1">
                   <div className="font-medium">{p.cliente_nome}</div>

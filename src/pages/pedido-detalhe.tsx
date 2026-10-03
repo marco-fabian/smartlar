@@ -7,7 +7,7 @@ import { Button } from "@/components/ui/button"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Skeleton } from "@/components/ui/skeleton"
 import { Table, TableBody, TableCell, TableFooter, TableHead, TableHeader, TableRow } from "@/components/ui/table"
-import { formatBRL, formatDataHora, formatTelefone } from "@/lib/format"
+import { formatBRL, formatData, formatDataHora, formatIntervalo, formatTelefone } from "@/lib/format"
 import { useHistorico, useItensPedidos, usePedido } from "@/lib/queries"
 import { PAGAMENTO, STATUS } from "@/lib/status"
 
@@ -69,7 +69,9 @@ export function PedidoDetalhePage() {
               </CardHeader>
               <CardContent className="grid gap-3 text-sm">
                 <Campo label="Técnico">{pedido.tecnico_nome ?? "Não definido"}</Campo>
-                <Campo label="Data e horário">{pedido.data_instalacao ? formatDataHora(pedido.data_instalacao) : "Não agendada"}</Campo>
+                <Campo label="Data e horário">{pedido.data_instalacao
+                    ? `${formatData(pedido.data_instalacao)}, ${formatIntervalo(pedido.data_instalacao, pedido.duracao_minutos)}`
+                    : "Não agendada"}</Campo>
                 <Campo label="Forma de pagamento">
                   {pedido.forma_pagamento ? PAGAMENTO[pedido.forma_pagamento] : "Definida na aprovação"}
                 </Campo>
