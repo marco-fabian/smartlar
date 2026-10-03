@@ -21,6 +21,7 @@ export type Database = {
           endereco: string
           id: string
           nome: string
+          notificar_whatsapp: boolean
           observacoes: string | null
           telefone: string
         }
@@ -30,6 +31,7 @@ export type Database = {
           endereco: string
           id?: string
           nome: string
+          notificar_whatsapp?: boolean
           observacoes?: string | null
           telefone: string
         }
@@ -39,6 +41,7 @@ export type Database = {
           endereco?: string
           id?: string
           nome?: string
+          notificar_whatsapp?: boolean
           observacoes?: string | null
           telefone?: string
         }
@@ -288,6 +291,7 @@ export type Database = {
           cliente_endereco: string | null
           cliente_id: string | null
           cliente_nome: string | null
+          cliente_notificar_whatsapp: boolean | null
           cliente_telefone: string | null
           concluido_em: string | null
           created_at: string | null
