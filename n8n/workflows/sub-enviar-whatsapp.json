@@ -11,7 +11,7 @@
         -420
       ],
       "parameters": {
-        "content": "## 📲 Enviar WhatsApp\nSub-workflow: **único ponto de contato com a Evolution API**. As outras automações do SmartLar chamam este.\n\n**Entrada**\n- `mensagem` (obrigatório)\n- `telefone`, `destinatario` e `whatsapp_autorizado` (opcionais): mensagem para cliente ou técnico. Sem telefone, vai para o grupo de notificações do Rafael\n\n**Configuração:** URL, instância e destino padrão no nó *Config da Evolution*\n**Credencial:** SmartLar · Evolution API\n**Falhas:** 3 tentativas com 3s de intervalo; depois o erro sobe para quem chamou\n\n`#smartlar` `#whatsapp` · `v1.0 · 02/10/2026`",
+        "content": "## 📲 Enviar WhatsApp\nSub-workflow: **único ponto de contato com a Evolution API**. As outras automações do SmartLar chamam este.\n\n**Entrada**\n- `mensagem` (obrigatório)\n- `telefone`, `destinatario` e `whatsapp_autorizado` (opcionais): mensagem para cliente ou técnico. Sem telefone, vai para o grupo de notificações do Rafael\n\n**Configuração:** URL, instância e destino padrão no nó *Config da Evolution*\n**Credencial:** SmartLar · Evolution API\n**Falhas:** 3 tentativas com 3s de intervalo; depois o erro sobe para quem chamou\n**Ativação:** fica inativo de propósito: é chamado pelos outros workflows\n\n`#smartlar` `#whatsapp` · `v1.0 · 02/10/2026`",
         "width": 1240,
         "height": 340,
         "color": 6
@@ -29,7 +29,7 @@
       "parameters": {
         "content": "### 🛡️ Consentimento (opt-in)\nSó recebe mensagem direta quem **autorizou**: o cliente com *Avisar pelo WhatsApp* marcado no cadastro.\n\nSem autorização (os telefones fictícios dos dados de exemplo, os técnicos), a mensagem **vai para o grupo do Rafael** com o aviso *[Para Fulano]*, e nunca para o número.",
         "width": 520,
-        "height": 440
+        "height": 580
       }
     },
     {
@@ -39,7 +39,7 @@
       "typeVersion": 1.1,
       "position": [
         0,
-        100
+        260
       ],
       "parameters": {
         "workflowInputs": {
@@ -67,7 +67,7 @@
       "typeVersion": 3.4,
       "position": [
         220,
-        100
+        260
       ],
       "parameters": {
         "assignments": {
@@ -103,7 +103,7 @@
       "typeVersion": 2.2,
       "position": [
         460,
-        100
+        260
       ],
       "parameters": {
         "conditions": {
@@ -137,7 +137,7 @@
       "typeVersion": 3.4,
       "position": [
         700,
-        0
+        160
       ],
       "parameters": {
         "assignments": {
@@ -166,7 +166,7 @@
       "typeVersion": 3.4,
       "position": [
         700,
-        220
+        380
       ],
       "parameters": {
         "assignments": {
@@ -195,7 +195,7 @@
       "typeVersion": 4.2,
       "position": [
         960,
-        100
+        260
       ],
       "parameters": {
         "method": "POST",

@@ -142,7 +142,8 @@ workflows['sub'] = {
              'Sem telefone, vai para o grupo de notificações do Rafael\n\n'
              '**Configuração:** URL, instância e destino padrão no nó *Config da Evolution*\n'
              '**Credencial:** SmartLar · Evolution API\n'
-             '**Falhas:** 3 tentativas com 3s de intervalo; depois o erro sobe para quem chamou\n\n'
+             '**Falhas:** 3 tentativas com 3s de intervalo; depois o erro sobe para quem chamou\n'
+             '**Ativação:** fica inativo de propósito: é chamado pelos outros workflows\n\n'
              f'`#smartlar` `#whatsapp` · `{VERSAO}`',
              [-60, -420], 1240, 340, 6),
         nota('Consentimento',
@@ -150,25 +151,25 @@ workflows['sub'] = {
              'Só recebe mensagem direta quem **autorizou**: o cliente com *Avisar pelo WhatsApp* marcado no cadastro.\n\n'
              'Sem autorização (os telefones fictícios dos dados de exemplo, os técnicos), a mensagem '
              '**vai para o grupo do Rafael** com o aviso *[Para Fulano]*, e nunca para o número.',
-             [400, -60], 520, 440),
-        node('Quando chamado', 'executeWorkflowTrigger', 1.1, [0, 100],
+             [400, -60], 520, 580),
+        node('Quando chamado', 'executeWorkflowTrigger', 1.1, [0, 260],
              {'workflowInputs': {'values': [{'name': 'mensagem'}, {'name': 'telefone'}, {'name': 'destinatario'},
                                             {'name': 'whatsapp_autorizado'}]}}),
-        node('Config da Evolution', 'set', 3.4, [220, 100], campos(
+        node('Config da Evolution', 'set', 3.4, [220, 260], campos(
             ('evolution_url', 'https://n8n-evolution-api.dnfcju.easypanel.host'),
             ('instancia', 'smartlar'),
             ('destino_padrao', DESTINO_PADRAO),
             manter_outros=True)),
-        node('Destinatário autorizou?', 'if', 2.2, [460, 100], condicoes(condicao(
+        node('Destinatário autorizou?', 'if', 2.2, [460, 260], condicoes(condicao(
             "={{ !!$json.telefone && String($json.whatsapp_autorizado) === 'true' }}",
             'true', tipo='boolean'))),
-        node('Destino: destinatário', 'set', 3.4, [700, 0], campos(
+        node('Destino: destinatário', 'set', 3.4, [700, 160], campos(
             ('numero', '={{ $json.telefone }}'),
             ('texto', '={{ $json.mensagem }}'))),
-        node('Destino: grupo do Rafael', 'set', 3.4, [700, 220], campos(
+        node('Destino: grupo do Rafael', 'set', 3.4, [700, 380], campos(
             ('numero', '={{ $json.destino_padrao }}'),
             ('texto', "={{ $json.telefone ? '📨 *[Para ' + ($json.destinatario || $json.telefone) + ']*\\n\\n' + $json.mensagem : $json.mensagem }}"))),
-        node('Enviar mensagem (Evolution)', 'httpRequest', 4.2, [960, 100], {
+        node('Enviar mensagem (Evolution)', 'httpRequest', 4.2, [960, 260], {
             'method': 'POST',
             'url': "={{ $('Config da Evolution').first().json.evolution_url }}/message/sendText/"
                    "{{ $('Config da Evolution').first().json.instancia }}",
@@ -197,8 +198,9 @@ workflows['erro'] = {
              '## 🚨 Alerta de falha\n'
              'Workflow de erro de todas as automações do SmartLar (*Settings → Error workflow*).\n\n'
              'Quando uma execução falha, manda no WhatsApp: workflow, nó, mensagem de erro e link da execução.\n\n'
+             '**Ativação:** fica inativo de propósito: o n8n chama este workflow quando outro falha.\n\n'
              f'`#smartlar` `#monitoramento` · `{VERSAO}`',
-             [-60, -320], 700, 280, 3),
+             [-60, -360], 700, 320, 3),
         node('Quando um workflow falhar', 'errorTrigger', 1, [0, 0], {}),
         node('Montar alerta', 'set', 3.4, [240, 0], campos((
             'mensagem',

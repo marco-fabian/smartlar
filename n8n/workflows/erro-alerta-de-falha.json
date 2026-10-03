@@ -8,12 +8,12 @@
       "typeVersion": 1,
       "position": [
         -60,
-        -320
+        -360
       ],
       "parameters": {
-        "content": "## 🚨 Alerta de falha\nWorkflow de erro de todas as automações do SmartLar (*Settings → Error workflow*).\n\nQuando uma execução falha, manda no WhatsApp: workflow, nó, mensagem de erro e link da execução.\n\n`#smartlar` `#monitoramento` · `v1.0 · 02/10/2026`",
+        "content": "## 🚨 Alerta de falha\nWorkflow de erro de todas as automações do SmartLar (*Settings → Error workflow*).\n\nQuando uma execução falha, manda no WhatsApp: workflow, nó, mensagem de erro e link da execução.\n\n**Ativação:** fica inativo de propósito: o n8n chama este workflow quando outro falha.\n\n`#smartlar` `#monitoramento` · `v1.0 · 02/10/2026`",
         "width": 700,
-        "height": 280,
+        "height": 320,
         "color": 3
       }
     },
