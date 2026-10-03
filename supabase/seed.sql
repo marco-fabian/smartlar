@@ -7,7 +7,7 @@
 set app.seed = 'on';
 
 truncate public.historico_status, public.itens_pedido, public.pedidos,
-         public.produtos, public.tecnicos, public.clientes
+         public.produtos, public.tecnicos, public.clientes, public.eventos_n8n
   restart identity cascade;
 
 -- Data/hora no fuso de São Paulo: pg_temp.dia(1, 14) = amanhã às 14h
