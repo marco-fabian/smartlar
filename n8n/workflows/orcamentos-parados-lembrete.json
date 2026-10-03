@@ -1,0 +1,449 @@
+{
+  "name": "SmartLar | Orçamentos parados → Lembrete",
+  "nodes": [
+    {
+      "id": "f2628309-779e-54dd-bfff-c66277ea56e5",
+      "name": "Sobre este workflow",
+      "type": "n8n-nodes-base.stickyNote",
+      "typeVersion": 1,
+      "position": [
+        -60,
+        -440
+      ],
+      "parameters": {
+        "content": "## ⏰ Orçamentos parados → Lembrete\n**Além do escopo.** Resolve a dor *\"esquece orçamentos que mandou e perde vendas\"*: todo dia às 9h o Rafael recebe os orçamentos sem resposta há alguns dias, do mais antigo para o mais novo.\n\nCada orçamento vem com um **link de WhatsApp com a mensagem de follow-up pronta** para o cliente: o Rafael revisa e envia com um toque.\n\n**Sem orçamento parado:** não manda nada (evita mensagem diária inútil)\n**Falhas:** *[Erro] Alerta de falha*\n\n`#smartlar` `#supabase` `#whatsapp` `#agendado` · `v1.0 · 02/10/2026`",
+        "width": 1880,
+        "height": 320,
+        "color": 6
+      }
+    },
+    {
+      "id": "ab2acf16-9e56-59c3-8931-063eb102a80e",
+      "name": "Etapa 1",
+      "type": "n8n-nodes-base.stickyNote",
+      "typeVersion": 1,
+      "position": [
+        -60,
+        -100
+      ],
+      "parameters": {
+        "content": "### 1. Configuração e consulta\n`dias_parado`: a partir de quantos dias o orçamento entra no lembrete.",
+        "width": 900,
+        "height": 560
+      }
+    },
+    {
+      "id": "afa85b1c-6021-5499-9e5f-b0cbe8ce5e8f",
+      "name": "Etapa 2",
+      "type": "n8n-nodes-base.stickyNote",
+      "typeVersion": 1,
+      "position": [
+        860,
+        -100
+      ],
+      "parameters": {
+        "content": "### 2. Monta e envia o lembrete",
+        "width": 1100,
+        "height": 560
+      }
+    },
+    {
+      "id": "ca10084c-0bcd-5be8-abf5-ce320e7cfb4c",
+      "name": "Todo dia às 9h",
+      "type": "n8n-nodes-base.scheduleTrigger",
+      "typeVersion": 1.2,
+      "position": [
+        0,
+        100
+      ],
+      "parameters": {
+        "rule": {
+          "interval": [
+            {
+              "field": "days",
+              "triggerAtHour": 9
+            }
+          ]
+        }
+      }
+    },
+    {
+      "id": "44374e8d-d4ac-5e9a-8d91-3ef69f706cd5",
+      "name": "Configuração",
+      "type": "n8n-nodes-base.set",
+      "typeVersion": 3.4,
+      "position": [
+        240,
+        100
+      ],
+      "parameters": {
+        "assignments": {
+          "assignments": [
+            {
+              "id": "693544ea-7513-5b20-8554-84b67f945b82",
+              "name": "dias_parado",
+              "value": 3,
+              "type": "number"
+            },
+            {
+              "id": "b5f837c3-05ec-5d26-9f15-6c3a9c97501f",
+              "name": "url_sistema",
+              "value": "https://smartlar.marcofabianufmg.workers.dev",
+              "type": "string"
+            }
+          ]
+        },
+        "options": {}
+      }
+    },
+    {
+      "id": "64105f1e-d864-5ff0-ad82-b748a320f6d5",
+      "name": "Buscar orçamentos parados",
+      "type": "n8n-nodes-base.supabase",
+      "typeVersion": 1,
+      "position": [
+        480,
+        100
+      ],
+      "parameters": {
+        "operation": "getAll",
+        "tableId": "vw_pedidos",
+        "returnAll": true,
+        "filterType": "manual",
+        "matchType": "allFilters",
+        "filters": {
+          "conditions": [
+            {
+              "keyName": "status",
+              "condition": "eq",
+              "keyValue": "orcamento"
+            },
+            {
+              "keyName": "created_at",
+              "condition": "lt",
+              "keyValue": "={{ $now.minus({ days: $json.dias_parado }).toUTC().toISO() }}"
+            }
+          ]
+        }
+      },
+      "credentials": {
+        "supabaseApi": {
+          "id": "1wRzT0SfONkLnl2w",
+          "name": "SmartLar · Supabase (service role)"
+        }
+      },
+      "alwaysOutputData": true
+    },
+    {
+      "id": "efc0cf15-75a9-55e3-8fc7-eb13866e7cbf",
+      "name": "Tem orçamento parado?",
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2.2,
+      "position": [
+        720,
+        100
+      ],
+      "parameters": {
+        "conditions": {
+          "options": {
+            "caseSensitive": true,
+            "leftValue": "",
+            "typeValidation": "strict",
+            "version": 2
+          },
+          "conditions": [
+            {
+              "id": "bd6f5d04-ee63-518e-aa9d-1c4371430232",
+              "leftValue": "={{ $json.id }}",
+              "rightValue": "",
+              "operator": {
+                "type": "string",
+                "operation": "exists",
+                "singleValue": true
+              }
+            }
+          ],
+          "combinator": "and"
+        },
+        "options": {}
+      }
+    },
+    {
+      "id": "57a586f0-b83f-5a6f-9744-94d1ac8f1804",
+      "name": "Nenhum orçamento parado",
+      "type": "n8n-nodes-base.noOp",
+      "typeVersion": 1,
+      "position": [
+        960,
+        300
+      ],
+      "parameters": {}
+    },
+    {
+      "id": "84c07634-d8d7-5265-a009-3f3f5bde7ec5",
+      "name": "Ordenar do mais antigo",
+      "type": "n8n-nodes-base.sort",
+      "typeVersion": 1,
+      "position": [
+        960,
+        0
+      ],
+      "parameters": {
+        "sortFieldsUi": {
+          "sortField": [
+            {
+              "fieldName": "created_at"
+            }
+          ]
+        },
+        "options": {}
+      }
+    },
+    {
+      "id": "79cf84be-3a99-5504-a17b-aa92ac7bb523",
+      "name": "Formatar cada orçamento",
+      "type": "n8n-nodes-base.set",
+      "typeVersion": 3.4,
+      "position": [
+        1180,
+        0
+      ],
+      "parameters": {
+        "assignments": {
+          "assignments": [
+            {
+              "id": "13056d64-dcc9-5ce3-99b6-b14228339018",
+              "name": "valor_total",
+              "value": "={{ Number($json.valor_total) }}",
+              "type": "number"
+            },
+            {
+              "id": "5a891792-093e-5751-bc2d-496bc45c919d",
+              "name": "linha",
+              "value": "=*#{{ $json.numero }}* · {{ $json.cliente_nome }} · {{ Number($json.valor_total).toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' }) }}\n⏳ enviado há {{ Math.floor($now.diff(DateTime.fromISO($json.created_at), 'days').days) }} dias\n💬 https://wa.me/{{ $json.cliente_telefone }}?text={{ encodeURIComponent('Olá, ' + $json.cliente_nome.split(' ')[0] + '! Tudo bem? Passando para saber se ficou alguma dúvida sobre o orçamento #' + $json.numero + ' da SmartLar. Posso ajudar em algo?') }}\n🔗 {{ $('Configuração').first().json.url_sistema }}/pedidos/{{ $json.id }}",
+              "type": "string"
+            }
+          ]
+        },
+        "options": {}
+      }
+    },
+    {
+      "id": "4c95e09e-82f6-5519-b79d-b40ef9721807",
+      "name": "Resumir orçamentos",
+      "type": "n8n-nodes-base.summarize",
+      "typeVersion": 1.1,
+      "position": [
+        1400,
+        0
+      ],
+      "parameters": {
+        "fieldsToSummarize": {
+          "values": [
+            {
+              "aggregation": "concatenate",
+              "field": "linha",
+              "separateBy": "other",
+              "customSeparator": "\n\n"
+            },
+            {
+              "aggregation": "sum",
+              "field": "valor_total"
+            },
+            {
+              "aggregation": "count",
+              "field": "linha"
+            }
+          ]
+        },
+        "options": {}
+      }
+    },
+    {
+      "id": "20bc0296-200c-5ca3-8101-1905405b3d49",
+      "name": "Montar lembrete",
+      "type": "n8n-nodes-base.set",
+      "typeVersion": 3.4,
+      "position": [
+        1620,
+        0
+      ],
+      "parameters": {
+        "assignments": {
+          "assignments": [
+            {
+              "id": "528f02e5-9f5c-5436-8f13-26f952fec290",
+              "name": "mensagem",
+              "value": "=⏰ *Orçamentos aguardando resposta*\n_Sem retorno há {{ $('Configuração').first().json.dias_parado }}+ dias, do mais antigo para o mais novo_\n\n{{ $json.concatenated_linha }}\n\n💰 *{{ Number($json.sum_valor_total).toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' }) }}* parados em {{ $json.count_linha }} {{ $json.count_linha === 1 ? 'orçamento' : 'orçamentos' }}.\nToque no 💬 para mandar o follow-up pronto ao cliente.",
+              "type": "string"
+            }
+          ]
+        },
+        "options": {}
+      }
+    },
+    {
+      "id": "0095d20b-ab48-55df-a25f-e34ac6186856",
+      "name": "Enviar lembrete ao Rafael",
+      "type": "n8n-nodes-base.executeWorkflow",
+      "typeVersion": 1.3,
+      "position": [
+        1840,
+        0
+      ],
+      "parameters": {
+        "workflowId": {
+          "__rl": true,
+          "value": "Z6Z4It2WacDz1cu3",
+          "mode": "list",
+          "cachedResultName": "SmartLar | [Sub] Enviar WhatsApp"
+        },
+        "workflowInputs": {
+          "mappingMode": "defineBelow",
+          "value": {
+            "mensagem": "={{ $json.mensagem }}"
+          },
+          "matchingColumns": [],
+          "schema": [
+            {
+              "id": "mensagem",
+              "displayName": "mensagem",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "canBeUsedToMatch": true,
+              "type": "string",
+              "removed": false
+            },
+            {
+              "id": "telefone",
+              "displayName": "telefone",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "canBeUsedToMatch": true,
+              "type": "string",
+              "removed": true
+            },
+            {
+              "id": "destinatario",
+              "displayName": "destinatario",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "canBeUsedToMatch": true,
+              "type": "string",
+              "removed": true
+            }
+          ],
+          "attemptToConvertTypes": false,
+          "convertFieldsToString": true
+        },
+        "options": {}
+      }
+    }
+  ],
+  "connections": {
+    "Todo dia às 9h": {
+      "main": [
+        [
+          {
+            "node": "Configuração",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Configuração": {
+      "main": [
+        [
+          {
+            "node": "Buscar orçamentos parados",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Buscar orçamentos parados": {
+      "main": [
+        [
+          {
+            "node": "Tem orçamento parado?",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Tem orçamento parado?": {
+      "main": [
+        [
+          {
+            "node": "Ordenar do mais antigo",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Nenhum orçamento parado",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Ordenar do mais antigo": {
+      "main": [
+        [
+          {
+            "node": "Formatar cada orçamento",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Formatar cada orçamento": {
+      "main": [
+        [
+          {
+            "node": "Resumir orçamentos",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Resumir orçamentos": {
+      "main": [
+        [
+          {
+            "node": "Montar lembrete",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Montar lembrete": {
+      "main": [
+        [
+          {
+            "node": "Enviar lembrete ao Rafael",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "settings": {
+    "executionOrder": "v1",
+    "timezone": "America/Sao_Paulo",
+    "saveManualExecutions": true,
+    "errorWorkflow": "Je3JpNLKg1mMNqVJ"
+  }
+}

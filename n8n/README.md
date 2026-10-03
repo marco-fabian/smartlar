@@ -6,6 +6,7 @@
 | `SmartLar \| Instalações de amanhã → WhatsApp` | Todo dia às 18h (America/Sao_Paulo) | Resumo das instalações do dia seguinte para o Rafael (avisa também quando não há nenhuma) e a agenda individual de cada técnico |
 | `SmartLar \| Pedido concluído → Faturamento (Sheets)` | Webhook ← trigger `pedidos_notificar_concluido` | Registra o faturamento na planilha *SmartLar · Faturamento* (bônus) |
 | `SmartLar \| Status do pedido → WhatsApp do cliente` | Webhook ← trigger `pedidos_notificar_status` | Avisa o cliente a cada etapa: aprovado, agendado, em andamento, concluído (além do escopo) |
+| `SmartLar \| Orçamentos parados → Lembrete` | Todo dia às 9h | Lista os orçamentos sem resposta há 3+ dias, com link de follow-up pronto para cada cliente (além do escopo) |
 | `SmartLar \| [Sub] Enviar WhatsApp` | Chamado pelos outros | Único ponto de contato com a Evolution API, com modo demonstração |
 | `SmartLar \| [Erro] Alerta de falha` | Error Trigger | Avisa no WhatsApp quando qualquer automação falha |
 

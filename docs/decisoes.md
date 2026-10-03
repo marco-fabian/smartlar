@@ -101,6 +101,9 @@ Uma das dores do enunciado é "clientes ligam perguntando status", e nenhuma ent
 ### Técnico recebe a própria agenda
 Outra dor do enunciado: "os técnicos não sabem a agenda sem ligar pro Rafael". A tela de agenda não resolve sozinha, porque os técnicos não têm login. O workflow das 18h ganhou um segundo ramo: cada técnico recebe no WhatsApp as instalações dele de amanhã, com endereço, link do Google Maps, telefone do cliente, observações e o que instalar. O agrupamento por técnico é feito pelo nó *Summarize* (concatenar por técnico), sem código. A view `vw_pedidos` ganhou a coluna `itens_resumo` ("2× Câmera IP Wi-Fi, 1× Sensor de presença").
 
+### Lembrete de orçamentos parados
+Dor do enunciado: "esquece orçamentos que mandou e perde vendas". O destaque no dashboard só ajuda se o Rafael abrir o sistema. Todo dia às 9h ele recebe no WhatsApp os orçamentos sem resposta há 3 dias ou mais (configurável), do mais antigo para o mais novo, com o total parado. Cada orçamento vem com um link `wa.me` com a mensagem de follow-up já escrita para o cliente: o Rafael revisa e envia com um toque, sem a automação falar com o cliente por conta própria. Sem orçamento parado, não manda nada.
+
 ### Modo demonstração
 Os telefones do seed são fictícios, mas o formato é real e poderiam existir. O sub-workflow tem um modo demonstração (ligado): mensagens para clientes e técnicos vão para o grupo do Rafael com o aviso *[Para Fulano]*. Uma lista de números liberados (fora do repositório) recebe de verdade, para a demonstração ao vivo.
 

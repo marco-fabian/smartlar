@@ -27,6 +27,7 @@ TAGS = {
     'amanha': ['smartlar', 'supabase', 'whatsapp', 'agendado'],
     'faturamento': ['smartlar', 'supabase', 'google-sheets'],
     'status_cliente': ['smartlar', 'supabase', 'whatsapp', 'cliente'],
+    'follow_up': ['smartlar', 'supabase', 'whatsapp', 'agendado'],
 }
 
 

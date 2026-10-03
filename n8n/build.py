@@ -485,6 +485,81 @@ workflows['status_cliente'] = {
     'settings': configuracoes(),
 }
 
+# ------------------------------------------------------------------ Extra: follow-up de orçamentos parados
+
+CONFIG_FOLLOWUP = "$('Configuração').first().json"
+TEXTO_FOLLOWUP = ("'Olá, ' + $json.cliente_nome.split(' ')[0] + '! Tudo bem? Passando para saber se ficou alguma dúvida "
+                  "sobre o orçamento #' + $json.numero + ' da SmartLar. Posso ajudar em algo?'")
+
+workflows['follow_up'] = {
+    'name': 'SmartLar | Orçamentos parados → Lembrete',
+    'nodes': [
+        nota('Sobre este workflow',
+             '## ⏰ Orçamentos parados → Lembrete\n'
+             '**Além do escopo.** Resolve a dor *"esquece orçamentos que mandou e perde vendas"*: '
+             'todo dia às 9h o Rafael recebe os orçamentos sem resposta há alguns dias, do mais antigo para o mais novo.\n\n'
+             'Cada orçamento vem com um **link de WhatsApp com a mensagem de follow-up pronta** para o cliente: '
+             'o Rafael revisa e envia com um toque.\n\n'
+             '**Sem orçamento parado:** não manda nada (evita mensagem diária inútil)\n'
+             '**Falhas:** *[Erro] Alerta de falha*\n\n'
+             f'`#smartlar` `#supabase` `#whatsapp` `#agendado` · `{VERSAO}`',
+             [-60, -440], 1880, 320, 6),
+        nota('Etapa 1', '### 1. Configuração e consulta\n'
+                        '`dias_parado`: a partir de quantos dias o orçamento entra no lembrete.',
+             [-60, -100], 900, 560),
+        nota('Etapa 2', '### 2. Monta e envia o lembrete', [860, -100], 1100, 560),
+        node('Todo dia às 9h', 'scheduleTrigger', 1.2, [0, 100],
+             {'rule': {'interval': [{'field': 'days', 'triggerAtHour': 9}]}}),
+        node('Configuração', 'set', 3.4, [240, 100], campos(
+            ('dias_parado', 3, 'number'),
+            ('url_sistema', 'https://smartlar.marcofabianufmg.workers.dev'))),
+        node('Buscar orçamentos parados', 'supabase', 1, [480, 100], {
+            'operation': 'getAll', 'tableId': 'vw_pedidos', 'returnAll': True,
+            'filterType': 'manual', 'matchType': 'allFilters',
+            'filters': {'conditions': [
+                {'keyName': 'status', 'condition': 'eq', 'keyValue': 'orcamento'},
+                {'keyName': 'created_at', 'condition': 'lt',
+                 'keyValue': '={{ $now.minus({ days: $json.dias_parado }).toUTC().toISO() }}'}]}},
+            credentials={'supabaseApi': credencial('supabase')}, alwaysOutputData=True),
+        node('Tem orçamento parado?', 'if', 2.2, [720, 100], condicoes(condicao('={{ $json.id }}', 'exists'))),
+        node('Nenhum orçamento parado', 'noOp', 1, [960, 300], {}),
+        node('Ordenar do mais antigo', 'sort', 1, [960, 0],
+             {'sortFieldsUi': {'sortField': [{'fieldName': 'created_at'}]}, 'options': {}}),
+        node('Formatar cada orçamento', 'set', 3.4, [1180, 0], campos(
+            ('valor_total', '={{ Number($json.valor_total) }}', 'number'),
+            ('linha',
+             '=*#{{ $json.numero }}* · {{ $json.cliente_nome }} · {{ ' + VALOR + ' }}\n'
+             "⏳ enviado há {{ Math.floor($now.diff(DateTime.fromISO($json.created_at), 'days').days) }} dias\n"
+             '💬 https://wa.me/{{ $json.cliente_telefone }}?text={{ encodeURIComponent(' + TEXTO_FOLLOWUP + ') }}\n'
+             '🔗 {{ ' + CONFIG_FOLLOWUP + '.url_sistema }}/pedidos/{{ $json.id }}'))),
+        node('Resumir orçamentos', 'summarize', 1.1, [1400, 0], {
+            'fieldsToSummarize': {'values': [
+                {'aggregation': 'concatenate', 'field': 'linha', 'separateBy': 'other', 'customSeparator': '\n\n'},
+                {'aggregation': 'sum', 'field': 'valor_total'},
+                {'aggregation': 'count', 'field': 'linha'}]},
+            'options': {}}),
+        node('Montar lembrete', 'set', 3.4, [1620, 0], campos((
+            'mensagem',
+            '=⏰ *Orçamentos aguardando resposta*\n'
+            '_Sem retorno há {{ ' + CONFIG_FOLLOWUP + '.dias_parado }}+ dias, do mais antigo para o mais novo_\n\n'
+            '{{ $json.concatenated_linha }}\n\n'
+            "💰 *{{ Number($json.sum_valor_total).toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' }) }}* "
+            "parados em {{ $json.count_linha }} {{ $json.count_linha === 1 ? 'orçamento' : 'orçamentos' }}.\n"
+            'Toque no 💬 para mandar o follow-up pronto ao cliente.'))),
+        enviar_whatsapp('Enviar lembrete ao Rafael', [1840, 0]),
+    ],
+    'connections': ligar(('Todo dia às 9h', 'Configuração'),
+                         ('Configuração', 'Buscar orçamentos parados'),
+                         ('Buscar orçamentos parados', 'Tem orçamento parado?'),
+                         ('Tem orçamento parado?', 'Ordenar do mais antigo', 0),
+                         ('Tem orçamento parado?', 'Nenhum orçamento parado', 1),
+                         ('Ordenar do mais antigo', 'Formatar cada orçamento'),
+                         ('Formatar cada orçamento', 'Resumir orçamentos'),
+                         ('Resumir orçamentos', 'Montar lembrete'),
+                         ('Montar lembrete', 'Enviar lembrete ao Rafael')),
+    'settings': configuracoes(),
+}
+
 ARQUIVOS = {
     'sub': 'sub-enviar-whatsapp',
     'erro': 'erro-alerta-de-falha',
@@ -492,6 +567,7 @@ ARQUIVOS = {
     'amanha': 'instalacoes-de-amanha-whatsapp',
     'faturamento': 'pedido-concluido-faturamento',
     'status_cliente': 'status-pedido-cliente-whatsapp',
+    'follow_up': 'orcamentos-parados-lembrete',
 }
 
 if __name__ == '__main__':
