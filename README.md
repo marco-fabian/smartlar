@@ -4,6 +4,7 @@ Sistema para a **SmartLar**, empresa de automação residencial, parar de usar u
 
 |  |  |
 |---|---|
+| 🎬 **Vídeo de apresentação** | [Assistir no Loom](https://www.loom.com/share/697e05485a3a45c89045ed16cab8ef3e) |
 | 🌐 **Sistema no ar** | [smartlar.marcofabianufmg.workers.dev](https://smartlar.marcofabianufmg.workers.dev) (acesso enviado no documento de entrega) |
 | 🧠 **Decisões técnicas** | [docs/decisoes.md](docs/decisoes.md) |
 | ⚙️ **Automações** | [n8n/README.md](n8n/README.md) |
