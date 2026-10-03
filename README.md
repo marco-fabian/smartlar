@@ -1,6 +1,6 @@
 # 🏠 SmartLar · Gestão de pedidos e instalações
 
-Sistema para a **SmartLar**, empresa de automação residencial, sair do WhatsApp e do caderninho: orçamentos, pedidos, agenda dos técnicos e faturamento num só lugar, com avisos automáticos no WhatsApp para o dono, os técnicos e os clientes.
+Sistema para a **SmartLar**, empresa de automação residencial, parar de usar um caderninho e conversas soltas no WhatsApp como sistema: orçamentos, pedidos, agenda dos técnicos e faturamento num só lugar, e o WhatsApp usado do jeito certo, como canal de aviso para o dono, os técnicos e os clientes.
 
 |  |  |
 |---|---|
